@@ -42,23 +42,27 @@ def parse_available_slots_v2(html: str) -> list[str]:
     return available
 
 
-def get_weekdays(months_ahead: int = 2) -> list[date]:
-    """Return all weekdays (Mon-Sat) from today through N months ahead."""
+def get_weekdays(months_ahead: int = 2, days_ahead: int | None = None) -> list[date]:
+    """Return weekdays (Mon-Sat) from today.
+
+    Pass days_ahead for a rolling window (quick mode), or months_ahead for the full range.
+    """
     today = date.today()
-    # Go to end of next month
-    end_month = today.month + months_ahead
-    end_year = today.year + (end_month - 1) // 12
-    end_month = ((end_month - 1) % 12) + 1
-    # Last day of that month
-    if end_month == 12:
-        end_date = date(end_year, 12, 31)
+    if days_ahead is not None:
+        end_date = today + timedelta(days=days_ahead)
     else:
-        end_date = date(end_year, end_month + 1, 1) - timedelta(days=1)
+        end_month = today.month + months_ahead
+        end_year = today.year + (end_month - 1) // 12
+        end_month = ((end_month - 1) % 12) + 1
+        end_date = (
+            date(end_year, 12, 31)
+            if end_month == 12
+            else date(end_year, end_month + 1, 1) - timedelta(days=1)
+        )
 
     days = []
     current = today
     while current <= end_date:
-        # Monday=0 ... Saturday=5, Sunday=6
         if current.weekday() < 6:  # exclude Sunday
             days.append(current)
         current += timedelta(days=1)
@@ -105,8 +109,10 @@ def fetch_slot_data(session: requests.Session, token: str, appt_date: date) -> d
 
 
 def main():
-    print("Indian Embassy Netherlands — Appointment Slot Checker")
-    print("=" * 55)
+    quick = "--quick" in sys.argv
+    mode_label = "QUICK (next 14 days)" if quick else "FULL (2 months)"
+    print(f"Indian Embassy Netherlands — Appointment Slot Checker [{mode_label}]")
+    print("=" * 60)
 
     # Step 1: Get a session and CSRF token
     print("\nFetching booking page to get session token...", end=" ", flush=True)
@@ -146,7 +152,7 @@ def main():
     print(f"OK (token: {token[:12]}...)")
 
     # Step 2: Get list of weekdays to check
-    weekdays = get_weekdays(months_ahead=2)
+    weekdays = get_weekdays(days_ahead=14) if quick else get_weekdays(months_ahead=2)
     print(f"Checking {len(weekdays)} weekdays from {weekdays[0]} to {weekdays[-1]}...")
 
     # Step 3: Fetch all dates in parallel
@@ -199,31 +205,56 @@ def main():
 
     # Step 7: Write slots.json for the hosted page
     json_path = "slots.json"
-    write_slots_json(results, all_services, json_path)
+    write_slots_json(results, all_services, json_path, merge=quick)
     print(f"\n\nData saved to: {json_path}")
 
 
-def write_slots_json(results: list, all_services: set, path: str):
+def write_slots_json(results: list, all_services: set, path: str, merge: bool = False):
+    # In merge mode, load existing data so full-range dates are preserved
+    existing = {}
+    if merge:
+        try:
+            with open(path, encoding="utf-8") as f:
+                existing = json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            pass
+
+    # Build a date→result map from the fresh fetch
+    fresh_dates = {r["date_str"] for r in results}
 
     services_out = {}
-    for svc_id in sorted(all_services, key=lambda x: int(x)):
+    for svc_id in sorted(all_services | set(existing.get("services", {}).keys()), key=lambda x: int(x)):
         svc_name = SERVICE_NAMES.get(svc_id, f"Service {svc_id}")
-        dates = []
+
+        # Start from existing dates outside the freshly-fetched window
+        kept = []
+        if merge:
+            for d in existing.get("services", {}).get(svc_id, {}).get("dates", []):
+                if d["date"] not in fresh_dates:
+                    kept.append(d)
+
+        # Add fresh results for the window we just checked
         for r in results:
             svc_data = r["services"].get(svc_id, {})
             count = svc_data.get("available", 0)
             if count > 0:
-                dates.append({
+                kept.append({
                     "date": r["date_str"],
                     "day": r["date"].strftime("%A"),
                     "slots_available": count,
                     "times": r["available_times"],
                 })
-        services_out[svc_id] = {"name": svc_name, "dates": dates}
+
+        # Sort by date
+        kept.sort(key=lambda d: datetime.strptime(d["date"], "%d-%m-%Y"))
+        services_out[svc_id] = {"name": svc_name, "dates": kept}
+
+    all_results = results or []
+    period_end = existing.get("period_end", "") if merge else (all_results[-1]["date_str"] if all_results else "")
 
     payload = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "period_end": results[-1]["date_str"] if results else "",
+        "period_end": period_end,
         "booking_url": BOOKING_URL,
         "services": services_out,
     }

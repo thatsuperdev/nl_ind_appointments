@@ -2,8 +2,19 @@ name: Update Appointment Slots
 
 on:
   schedule:
-    - cron: '*/30 6-14 * * 1-6'  # Every 30 min, 06:00-14:30 UTC (08:00-16:30 Amsterdam), Mon-Sat
-  workflow_dispatch:               # Allow manual trigger from GitHub UI
+    # Quick scan: every 5 min during embassy hours (06:00-14:00 UTC = 08:00-16:00 Amsterdam), Mon-Sat
+    # Checks only the next 14 days (~14 API calls). Merges with existing full data.
+    - cron: '*/5 6-14 * * 1-6'
+    # Full scan: every 2 hours during embassy hours. Checks all ~79 weekdays (2 months).
+    - cron: '0 */2 * * 1-6'
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Scan mode'
+        required: false
+        default: 'full'
+        type: choice
+        options: [full, quick]
 
 permissions:
   contents: write
@@ -23,8 +34,21 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Determine mode
+        id: mode
+        run: |
+          # workflow_dispatch with explicit mode choice
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "args=${{ github.event.inputs.mode == 'quick' && '--quick' || '' }}" >> $GITHUB_OUTPUT
+          # 5-min cron = quick, 2-hour cron = full (heuristic: minute != 0)
+          elif [ "$(date +%M)" != "0" ]; then
+            echo "args=--quick" >> $GITHUB_OUTPUT
+          else
+            echo "args=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Fetch slot data
-        run: python check_slots.py
+        run: python check_slots.py ${{ steps.mode.outputs.args }}
 
       - name: Commit slots.json if changed
         run: |
@@ -34,6 +58,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes to slots.json"
           else
-            git commit -m "chore: update slots.json [skip ci]"
+            MODE="${{ steps.mode.outputs.args == '--quick' && 'quick' || 'full' }}"
+            git commit -m "chore: update slots.json (${MODE}) [skip ci]"
             git push
           fi
