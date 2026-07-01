@@ -8,6 +8,7 @@ Fetches available slots for all services across current + next month.
 import json
 import re
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta, timezone
 
@@ -70,42 +71,49 @@ def get_weekdays(months_ahead: int = 2, days_ahead: int | None = None) -> list[d
 
 
 def fetch_slot_data(session: requests.Session, token: str, appt_date: date) -> dict:
-    """Call the API for a single date and return parsed result."""
+    """Call the API for a single date, retrying up to 3 times on transient errors."""
     date_str = appt_date.strftime("%d-%m-%Y")
-    try:
-        resp = session.post(
-            API_URL,
-            data={"appmnt_date": date_str, "_token": token},
-            timeout=15,
-        )
-        resp.raise_for_status()
-        data = resp.json()
-        available_times = parse_available_slots_v2(data.get("timeslots_html", ""))
-        services_raw = data.get("services", {})
-        # Parse "Passport Services (12 available)" -> count
-        services = {}
-        for k, v in services_raw.items():
-            count_match = re.search(r'\((\d+) available\)', v)
-            name_match = re.match(r'^(.+?)\s*\(', v)
-            if name_match:
-                name = name_match.group(1).strip()
-                count = int(count_match.group(1)) if count_match else 0
-                services[k] = {"name": name, "available": count}
-        return {
-            "date": appt_date,
-            "date_str": date_str,
-            "available_times": available_times,
-            "services": services,
-            "error": None,
-        }
-    except Exception as e:
-        return {
-            "date": appt_date,
-            "date_str": date_str,
-            "available_times": [],
-            "services": {},
-            "error": str(e),
-        }
+    last_err = ""
+    for attempt in range(3):
+        try:
+            resp = session.post(
+                API_URL,
+                data={"appmnt_date": date_str, "_token": token},
+                timeout=15,
+            )
+            if resp.status_code == 429:
+                time.sleep(2 ** attempt)
+                continue
+            resp.raise_for_status()
+            data = resp.json()
+            available_times = parse_available_slots_v2(data.get("timeslots_html", ""))
+            services_raw = data.get("services", {})
+            services = {}
+            for k, v in services_raw.items():
+                count_match = re.search(r'\((\d+) available\)', v)
+                name_match = re.match(r'^(.+?)\s*\(', v)
+                if name_match:
+                    name = name_match.group(1).strip()
+                    count = int(count_match.group(1)) if count_match else 0
+                    services[k] = {"name": name, "available": count}
+            return {
+                "date": appt_date,
+                "date_str": date_str,
+                "available_times": available_times,
+                "services": services,
+                "error": None,
+            }
+        except Exception as e:
+            last_err = str(e)
+            if attempt < 2:
+                time.sleep(1)
+    return {
+        "date": appt_date,
+        "date_str": date_str,
+        "available_times": [],
+        "services": {},
+        "error": last_err,
+    }
 
 
 def main():
@@ -172,20 +180,26 @@ def main():
                 errors += 1
             print(f"\r  Progress: {done}/{len(weekdays)} dates checked", end="", flush=True)
 
-    print(f"\n  Done. {errors} errors." if errors else "\n  Done.")
+    if errors:
+        print(f"\n  Done with {errors}/{len(weekdays)} errors.")
+    else:
+        print("\n  Done.")
+
+    if errors == len(weekdays):
+        print("All requests failed — not writing slots.json to avoid overwriting good data.")
+        sys.exit(1)
 
     # Step 4: Sort results by date
     results.sort(key=lambda r: r["date"])
 
     # Step 5: Collect all service keys seen
-    all_services = set()
+    all_services: set[str] = set()
     for r in results:
         all_services.update(r["services"].keys())
-    all_services = sorted(all_services, key=lambda x: int(x))
 
     # Step 6: Print terminal summary
     print()
-    for svc_id in all_services:
+    for svc_id in sorted(all_services, key=lambda x: int(x)):
         svc_name = SERVICE_NAMES.get(svc_id, f"Service {svc_id}")
         print(f"\n{'─' * 55}")
         print(f"  {svc_name}")
@@ -222,8 +236,11 @@ def write_slots_json(results: list, all_services: set, path: str, merge: bool = 
     # Build a date→result map from the fresh fetch
     fresh_dates = {r["date_str"] for r in results}
 
+    # Union of service IDs seen in fresh results + existing data
+    all_known = set(all_services) | set(existing.get("services", {}).keys())
+
     services_out = {}
-    for svc_id in sorted(all_services | set(existing.get("services", {}).keys()), key=lambda x: int(x)):
+    for svc_id in sorted(all_known, key=lambda x: int(x)):
         svc_name = SERVICE_NAMES.get(svc_id, f"Service {svc_id}")
 
         # Start from existing dates outside the freshly-fetched window
@@ -245,8 +262,14 @@ def write_slots_json(results: list, all_services: set, path: str, merge: bool = 
                     "times": r["available_times"],
                 })
 
-        # Sort by date
-        kept.sort(key=lambda d: datetime.strptime(d["date"], "%d-%m-%Y"))
+        # Sort by date, drop any entries with unparseable dates
+        def _date_key(d):
+            try:
+                return datetime.strptime(d["date"], "%d-%m-%Y")
+            except (KeyError, ValueError):
+                return datetime.min
+
+        kept.sort(key=_date_key)
         services_out[svc_id] = {"name": svc_name, "dates": kept}
 
     all_results = results or []

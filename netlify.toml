@@ -1,0 +1,14 @@
+[build]
+  publish = "."
+
+# slots.json must never be served stale from CDN — always revalidate
+[[headers]]
+  for = "/slots.json"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+# index.html same — ensures users get the latest deploy immediately
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
