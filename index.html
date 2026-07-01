@@ -39,13 +39,18 @@
   }
 }
 </script>
-<!-- Google tag (gtag.js) -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q31RGTNB00"></script>
+<!-- Google tag (gtag.js) — production only, skipped on local/preview hosts -->
 <script>
   window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
-  gtag('config', 'G-Q31RGTNB00');
+  function gtag(){ dataLayer.push(arguments); }
+  if (location.hostname === 'nl-ind-embassyappointments.netlify.app') {
+    const gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = 'https://www.googletagmanager.com/gtag/js?id=G-Q31RGTNB00';
+    document.head.appendChild(gaScript);
+    gtag('js', new Date());
+    gtag('config', 'G-Q31RGTNB00');
+  }
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -178,7 +183,7 @@ body {
 }
 
 /* ── Main layout ─────────────────────────────────────────── */
-.container { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
+.container { max-width: 900px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
 
 /* ── Meta bar ────────────────────────────────────────────── */
 .disclaimer-bar {
@@ -194,12 +199,12 @@ body {
 .meta-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: .6rem;
   flex-wrap: wrap;
-  gap: .5rem;
-  margin-bottom: 1.5rem;
   font-size: .78rem;
   color: var(--muted);
+  white-space: nowrap;
+  padding-top: .3rem;
 }
 .meta-stale {
   color: var(--danger);
@@ -225,7 +230,7 @@ body {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  margin-bottom: 1.75rem;
+  margin-bottom: 1.1rem;
   padding-bottom: 2px; /* show focus ring */
 }
 .service-scroll::-webkit-scrollbar { display: none; }
@@ -237,14 +242,14 @@ body {
 .svc-btn {
   display: inline-flex;
   align-items: center;
-  gap: .4rem;
-  padding: .5rem 1rem;
+  gap: .38rem;
+  padding: .4rem .85rem;
   border: 1.5px solid var(--border);
   border-radius: 999px;
   background: var(--white);
   cursor: pointer;
   font-family: inherit;
-  font-size: .82rem;
+  font-size: .78rem;
   font-weight: 500;
   color: var(--muted);
   transition: border-color .15s, color .15s, background .15s, box-shadow .15s;
@@ -277,15 +282,18 @@ body {
 .svc-btn.active .svc-count { background: rgba(255,255,255,.2); }
 
 /* ── Section label ───────────────────────────────────────── */
-.section-head {
+.content-head {
   display: flex;
-  align-items: baseline;
-  gap: .75rem;
-  margin-bottom: 1rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .3rem 1rem;
+  margin-bottom: .85rem;
 }
+.content-head-text { display: flex; flex-direction: column; gap: .15rem; }
 .section-label {
   font-family: 'Playfair Display', serif;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--navy);
 }
@@ -298,126 +306,210 @@ body {
 .panel { display: none; }
 .panel.active { display: block; }
 
-.calendar-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 1.75rem;
-  align-items: flex-start;
+/* Calendar + selected-date detail: stacked on narrow screens, side by
+   side once there's room for the detail panel to sit as a slim rail. */
+.calendar-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+  align-items: start;
 }
-.calendar { flex: 1 1 280px; min-width: 260px; }
+@media (min-width: 760px) {
+  .calendar-layout { grid-template-columns: minmax(0, 620px) minmax(200px, 260px); }
+}
+
+/* The two months sit inside one bound "ledger" — a nod to the embassy's
+   paper record books — with a soft center fold on desktop. */
+.calendar-wrap {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 620px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.calendar {
+  min-width: 0;
+  padding: .9rem 1rem 1.05rem;
+}
+.calendar + .calendar {
+  border-left: 1px solid var(--border);
+  box-shadow: inset 6px 0 8px -8px rgba(26,43,94,.18);
+}
 .calendar-title {
   font-family: 'Playfair Display', serif;
-  font-size: .95rem;
+  font-size: .82rem;
   font-weight: 700;
   color: var(--navy);
-  margin-bottom: .6rem;
+  display: inline-block;
+  padding-bottom: .26rem;
+  margin-bottom: .55rem;
+  border-bottom: 2px solid var(--gold);
 }
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: .3rem;
+  gap: .18rem;
 }
 .cal-dow {
-  font-size: .62rem;
+  font-size: .56rem;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .04em;
+  letter-spacing: .06em;
   color: var(--muted);
   text-align: center;
-  padding-bottom: .2rem;
+  padding-bottom: .28rem;
 }
 .cal-cell {
   aspect-ratio: 1;
-  border-radius: 7px;
+  border-radius: 5px;
   border: 1px solid transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  font-size: .78rem;
+  gap: 1px;
+  font-family: inherit;
+  font-size: .72rem;
   font-variant-numeric: tabular-nums;
-  transition: transform .12s, box-shadow .12s, background .12s;
+  transition: border-color .12s, box-shadow .12s, background-color .12s, transform .12s;
 }
 .cal-cell.empty { visibility: hidden; }
 .cal-cell.cal-weekend,
 .cal-cell.cal-past {
-  color: #C4BDAE;
+  color: #C7C1B4;
   background: transparent;
 }
 .cal-cell.cal-full {
-  background: var(--danger-bg);
-  color: var(--danger);
-  border-color: #F5CACA;
+  background: #FBF1EC;
+  color: #A6552F;
+  border-color: #F0DACB;
+  font-weight: 500;
 }
 .cal-cell.cal-available {
   background: var(--avail-bg);
-  color: var(--avail);
-  border-color: #B9E6C4;
+  color: #0F5C33;
+  border-color: #AFE3C3;
   font-weight: 700;
   cursor: pointer;
 }
 .cal-cell.cal-available:hover {
+  border-color: var(--avail);
   box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
+}
+.cal-cell.cal-available:focus-visible {
+  outline: 2px solid var(--navy);
+  outline-offset: 2px;
 }
 .cal-cell.cal-available.selected {
   background: var(--navy);
   color: var(--white);
   border-color: var(--navy);
   box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
 }
+.cal-daynum { line-height: 1; }
 .cal-count {
-  font-size: .58rem;
+  margin-top: 2px;
+  font-size: .5rem;
   font-weight: 700;
-  margin-top: 1px;
-  opacity: .85;
+  letter-spacing: .01em;
+  line-height: 1;
+  padding: .1rem .3rem;
+  border-radius: 4px;
+  background: rgba(22,163,74,.16);
+  color: #0F5C33;
+}
+.cal-cell.selected .cal-count {
+  background: rgba(255,255,255,.2);
+  color: var(--gold-light);
 }
 
 .cal-legend {
   display: flex;
   flex-wrap: wrap;
   gap: 1.1rem;
-  margin-top: 1.1rem;
-  font-size: .72rem;
+  margin-top: .85rem;
+  font-size: .7rem;
   color: var(--muted);
 }
 .legend-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 3px;
   display: inline-block;
-  margin-right: .35rem;
+  margin-right: .36rem;
   vertical-align: -1px;
 }
 
 .cal-detail {
-  margin-top: 1.25rem;
-  padding: 1rem 1.15rem;
+  padding: .75rem 1rem;
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 var(--radius) var(--radius) 0;
   box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+@media (min-width: 760px) {
+  .cal-detail { max-height: 452px; }
 }
 .cal-detail-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
   font-family: 'Playfair Display', serif;
-  font-size: .92rem;
+  font-size: .84rem;
   font-weight: 700;
   color: var(--navy);
-  margin-bottom: .6rem;
+  margin-bottom: .55rem;
+}
+@media (min-width: 760px) {
+  .cal-detail-title { flex-direction: column; align-items: flex-start; gap: .3rem; }
+}
+.cal-detail-count {
+  display: inline-flex;
+  align-items: center;
+  padding: .14rem .48rem;
+  border-radius: 999px;
+  background: var(--avail-bg);
+  color: #0F5C33;
+  font-size: .64rem;
+  font-weight: 700;
+  white-space: nowrap;
+  font-family: 'Inter', sans-serif;
 }
 .cal-detail-empty {
-  font-size: .82rem;
+  font-size: .8rem;
   color: var(--muted);
 }
 .time-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: .32rem .38rem;
+  gap: .3rem .36rem;
+}
+@media (min-width: 760px) {
+  .time-chips {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: .3rem;
+    overflow-y: auto;
+    padding-right: .2rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+  .time-chip { justify-content: center; flex-shrink: 0; }
 }
 .time-chip {
   display: inline-flex;
   align-items: center;
-  font-size: .72rem;
+  font-size: .7rem;
   font-weight: 500;
   background: var(--gold-light);
   border: 1px solid #e8d49a;
@@ -490,7 +582,8 @@ body {
   .header-title { font-size: .95rem; }
   .header-inner { gap: .75rem; }
   .header-book { padding: .42rem .58rem; font-size: .72rem; }
-  .calendar-wrap { gap: 1.5rem; }
+  .calendar-wrap { grid-template-columns: 1fr; }
+  .calendar + .calendar { border-left: none; border-top: 1px solid var(--border); }
   .cal-cell { font-size: .72rem; }
   .skeleton-wrap { grid-template-columns: repeat(2, 1fr); }
 }
@@ -525,9 +618,24 @@ body {
   Unofficial tool — not affiliated with the <a href="https://www.indianembassythehague.nl" target="_blank" rel="noopener">Indian Embassy Netherlands</a>. Always verify on the <a href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener">official booking site</a>.
 </div>
 <main class="container" aria-label="Appointment slot availability">
-  <div class="meta-bar">
-    <span id="last-updated">Loading…</span>
-    <button class="refresh-link" onclick="loadData({ manual: true })" id="refresh-btn" style="display:none">Refresh now</button>
+  <div id="service-pills">
+    <div class="skeleton-wrap" style="grid-template-columns:repeat(5,1fr);height:38px">
+      <div class="skeleton-row" style="height:38px;border-radius:999px"></div>
+      <div class="skeleton-row" style="height:38px;border-radius:999px"></div>
+      <div class="skeleton-row" style="height:38px;border-radius:999px;opacity:.6"></div>
+      <div class="skeleton-row" style="height:38px;border-radius:999px;opacity:.35"></div>
+      <div class="skeleton-row" style="height:38px;border-radius:999px;opacity:.2"></div>
+    </div>
+  </div>
+  <div class="content-head">
+    <div class="content-head-text">
+      <span class="section-label" id="active-service-title">Loading…</span>
+      <span class="section-count" id="active-service-count"></span>
+    </div>
+    <div class="meta-bar">
+      <span id="last-updated">Loading…</span>
+      <button class="refresh-link" onclick="loadData({ manual: true })" id="refresh-btn" style="display:none">Refresh now</button>
+    </div>
   </div>
   <div id="app">
     <div class="skeleton-wrap">
@@ -553,6 +661,7 @@ let activeService = null;
 let refreshTimer = null;
 let metaTimer = null;
 let isLoading = false;
+const selectedDates = {};
 
 function formatDate(ddmmyyyy) {
   const [d, mo, y] = ddmmyyyy.split('-');
@@ -575,7 +684,7 @@ function toDateStr(year, month, day) {
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DOW_LABELS = ['S','M','T','W','T','F','S'];
 
-function renderCalendarMonth(year, month, dateMap, todayMidnight) {
+function renderCalendarMonth(year, month, dateMap, todayMidnight, selectedDate) {
   const daysInMonth = new Date(year, month + 1, 0).getDate();
   const startDow = new Date(year, month, 1).getDay();
   let cells = '';
@@ -590,16 +699,20 @@ function renderCalendarMonth(year, month, dateMap, todayMidnight) {
     let cls = 'cal-cell';
     let inner = `<span class="cal-daynum">${day}</span>`;
     let onclick = '';
+    let isSelectable = false;
     if (isWeekend || isPast) {
       cls += isWeekend ? ' cal-weekend' : ' cal-past';
     } else if (info) {
-      cls += ' cal-available';
-      inner += `<span class="cal-count">${info.count}</span>`;
-      onclick = ` onclick="selectDate('${dateStr}')"`;
+      cls += ` cal-available${dateStr === selectedDate ? ' selected' : ''}`;
+      inner += `<span class="cal-count" aria-label="${info.count} available slots">${info.count}</span>`;
+      onclick = ` onclick="selectDate('${dateStr}')" title="${info.count} available slot${info.count !== 1 ? 's' : ''}"`;
+      isSelectable = true;
     } else {
       cls += ' cal-full';
     }
-    cells += `<div class="${cls}" data-date="${dateStr}"${onclick}>${inner}</div>`;
+    cells += isSelectable
+      ? `<button type="button" class="${cls}" data-date="${dateStr}"${onclick}>${inner}</button>`
+      : `<div class="${cls}" data-date="${dateStr}">${inner}</div>`;
   }
   return `<div class="calendar" data-month="${year}-${pad2(month + 1)}">
     <div class="calendar-title">${MONTH_NAMES[month]} ${year}</div>
@@ -608,6 +721,26 @@ function renderCalendarMonth(year, month, dateMap, todayMidnight) {
       ${cells}
     </div>
   </div>`;
+}
+
+function renderDateDetail(dateInfo) {
+  if (!dateInfo) {
+    return `<div class="cal-detail-empty">No highlighted date selected.</div>`;
+  }
+  // Use the same number everywhere: the count of time windows actually listed
+  // below. (The embassy API separately reports a per-service quota, but it
+  // doesn't map to specific windows, so showing it alongside a shorter time
+  // list only reads as a bug — one honest, matching number is clearer.)
+  const times = dateInfo.times || [];
+  const n = times.length;
+  const chips = times.map(t => `<span class="time-chip">${formatTime(t)}</span>`).join('');
+  return `
+    <div class="cal-detail-title">
+      <span>${formatDate(dateInfo.date)} · ${dateInfo.day}</span>
+      <span class="cal-detail-count">${n} open</span>
+    </div>
+    <div class="time-chips">${chips}</div>
+  `;
 }
 
 function timeSince(isoStr) {
@@ -713,7 +846,12 @@ function render() {
       </div>`;
     } else {
       const dateMap = {};
-      svc.dates.forEach(d => { dateMap[d.date] = { count: d.slots_available, times: d.times }; });
+      svc.dates.forEach(d => { dateMap[d.date] = { count: (d.times || []).length, times: d.times }; });
+      const selectedDate = selectedDates[id] && dateMap[selectedDates[id]]
+        ? selectedDates[id]
+        : svc.dates[0].date;
+      selectedDates[id] = selectedDate;
+      const selectedInfo = svc.dates.find(d => d.date === selectedDate);
 
       const now = new Date();
       const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -721,43 +859,49 @@ function render() {
         [now.getFullYear(), now.getMonth()],
         now.getMonth() === 11 ? [now.getFullYear() + 1, 0] : [now.getFullYear(), now.getMonth() + 1],
       ];
-      const calendars = months.map(([y, m]) => renderCalendarMonth(y, m, dateMap, todayMidnight)).join('');
+      const calendars = months.map(([y, m]) => renderCalendarMonth(y, m, dateMap, todayMidnight, selectedDate)).join('');
 
-      body = `<div class="section-head">
-        <span class="section-label">${svc.name}</span>
-        <span class="section-count">${svc.dates.length} date${svc.dates.length !== 1 ? 's' : ''} with reported availability</span>
+      body = `<div class="calendar-layout">
+        <div class="calendar-wrap">${calendars}</div>
+        <div class="cal-detail" id="cal-detail-${id}">
+          ${renderDateDetail(selectedInfo)}
+        </div>
       </div>
-      <div class="calendar-wrap">${calendars}</div>
       <div class="cal-legend">
-        <span><span class="legend-dot" style="background:var(--avail-bg);border:1px solid #B9E6C4"></span>Open — tap for times</span>
-        <span><span class="legend-dot" style="background:var(--danger-bg);border:1px solid #F5CACA"></span>Fully booked</span>
+        <span><span class="legend-dot" style="background:var(--avail-bg);border:1px solid #AFE3C3"></span>Open — tap for times</span>
+        <span><span class="legend-dot" style="background:#FBF1EC;border:1px solid #F0DACB"></span>Fully booked</span>
         <span><span class="legend-dot" style="background:var(--paper-dark)"></span>Weekend / closed</span>
-      </div>
-      <div class="cal-detail" id="cal-detail-${id}">
-        <div class="cal-detail-empty">Tap a highlighted date above to see its available time slots.</div>
       </div>`;
     }
     return `<div class="panel ${isActive ? 'active' : ''}" id="panel-${id}">${body}</div>`;
   }).join('');
 
-  document.getElementById('app').innerHTML =
-    `<div class="service-scroll"><div class="services">${pills}</div></div>${panels}`;
+  document.getElementById('service-pills').innerHTML =
+    `<div class="service-scroll"><div class="services">${pills}</div></div>`;
+  document.getElementById('app').innerHTML = panels;
+  updateActiveServiceHead();
+}
+
+function updateActiveServiceHead() {
+  const svc = data.services[activeService];
+  const n = svc.dates.length;
+  document.getElementById('active-service-title').textContent = svc.name;
+  document.getElementById('active-service-count').textContent = n > 0
+    ? `${n} date${n !== 1 ? 's' : ''} with reported availability`
+    : 'No available dates';
 }
 
 function selectDate(dateStr) {
   const svc = data.services[activeService];
   const d = svc.dates.find(x => x.date === dateStr);
   if (!d) return;
+  selectedDates[activeService] = dateStr;
 
   const panel = document.getElementById('panel-' + activeService);
   panel.querySelectorAll('.cal-cell.selected').forEach(el => el.classList.remove('selected'));
   panel.querySelectorAll(`.cal-cell[data-date="${dateStr}"]`).forEach(el => el.classList.add('selected'));
 
-  const chips = (d.times || []).map(t => `<span class="time-chip">${formatTime(t)}</span>`).join('');
-  document.getElementById('cal-detail-' + activeService).innerHTML = `
-    <div class="cal-detail-title">${formatDate(d.date)} · ${d.day}</div>
-    <div class="time-chips">${chips}</div>
-  `;
+  document.getElementById('cal-detail-' + activeService).innerHTML = renderDateDetail(d);
   gtrack('select_date', { service_id: activeService, date: dateStr });
 }
 
@@ -771,6 +915,7 @@ function selectService(id) {
   document.querySelectorAll('.panel').forEach(p =>
     p.classList.toggle('active', p.id === 'panel-' + id)
   );
+  updateActiveServiceHead();
 }
 
 
