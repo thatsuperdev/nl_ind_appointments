@@ -84,6 +84,15 @@ def fetch_slot_data(session: requests.Session, token: str, appt_date: date) -> d
             if resp.status_code == 429:
                 time.sleep(2 ** attempt)
                 continue
+            if resp.status_code == 405:
+                # Server rejects the date (too far out or unavailable period)
+                return {
+                    "date": appt_date,
+                    "date_str": date_str,
+                    "available_times": [],
+                    "services": {},
+                    "error": None,  # not an error — just no availability
+                }
             resp.raise_for_status()
             data = resp.json()
             available_times = parse_available_slots_v2(data.get("timeslots_html", ""))

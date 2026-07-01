@@ -1,5 +1,8 @@
 # Indian Embassy Netherlands — Appointment Availability
 
+[![Update Slots — Full](https://github.com/thatsuperdev/nl_ind_appointments/actions/workflows/update-slots-full.yml/badge.svg)](https://github.com/thatsuperdev/nl_ind_appointments/actions/workflows/update-slots-full.yml)
+[![Update Slots — Quick](https://github.com/thatsuperdev/nl_ind_appointments/actions/workflows/update-slots-quick.yml/badge.svg)](https://github.com/thatsuperdev/nl_ind_appointments/actions/workflows/update-slots-quick.yml)
+
 A public page showing available appointment slots at the Indian Embassy in The Hague, updated every 10 minutes during embassy hours.
 
 **Live site:** deploy to Netlify (see setup below)  
