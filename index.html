@@ -3,297 +3,639 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Indian Embassy Netherlands — Appointment Slots</title>
+<title>Indian Embassy NL — Appointment Availability</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy:       #1A2B5E;
+  --navy-mid:   #243672;
+  --navy-dim:   #1A2B5E99;
+  --paper:      #F6F3EC;
+  --paper-dark: #EDE9DF;
+  --gold:       #C8942A;
+  --gold-light: #FDF3DC;
+  --avail:      #16A34A;
+  --avail-bg:   #DCFCE7;
+  --text:       #1A2030;
+  --muted:      #64748B;
+  --border:     #DDD8CE;
+  --white:      #FFFFFF;
+  --danger:     #DC2626;
+  --danger-bg:  #FEF2F2;
+  --rail-bg:    #E5E0D4;
+  --shadow-sm:  0 1px 3px rgba(26,43,94,.08);
+  --shadow-md:  0 4px 12px rgba(26,43,94,.12);
+  --radius:     10px;
+  --radius-sm:  6px;
+}
 
-  body {
-    font-family: system-ui, -apple-system, sans-serif;
-    background: #f4f6f9;
-    color: #1a1a2e;
-    min-height: 100vh;
-  }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  header {
-    background: #1a3a6b;
-    color: white;
-    padding: 1.25rem 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
-  header img { width: 44px; height: 44px; flex-shrink: 0; }
-  header h1 { font-size: 1.1rem; font-weight: 600; line-height: 1.3; }
-  header p { font-size: 0.78rem; opacity: 0.75; margin-top: 0.2rem; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--paper);
+  color: var(--text);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
 
-  .container { max-width: 960px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+/* ── Header ─────────────────────────────────────────────── */
+.header {
+  background: var(--navy);
+  padding: 0 1.5rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  box-shadow: 0 2px 12px rgba(0,0,0,.25);
+}
+.header-inner {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0;
+}
+.flag {
+  display: flex;
+  flex-direction: column;
+  width: 36px;
+  height: 24px;
+  border-radius: 3px;
+  overflow: hidden;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0,0,0,.3);
+}
+.flag-stripe { flex: 1; }
+.flag-stripe.saffron { background: #FF9933; }
+.flag-stripe.white   { background: #FFFFFF; position: relative; }
+.flag-stripe.green   { background: #138808; }
+.ashoka {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #000080;
+  line-height: 1;
+}
+.header-text { flex: 1; min-width: 0; }
+.header-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: .01em;
+  line-height: 1.2;
+}
+.header-sub {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,.55);
+  margin-top: 0.15rem;
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--avail);
+  display: inline-block;
+  margin-right: 5px;
+  animation: pulse 2.2s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: .4; transform: scale(.75); }
+}
 
-  .meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1.25rem;
-    font-size: 0.82rem;
-    color: #555;
-  }
-  .meta .refreshing { color: #1a56db; }
+/* ── Main layout ─────────────────────────────────────────── */
+.container { max-width: 900px; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
 
-  /* Service pills */
-  .services {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-  }
-  .svc-btn {
-    padding: 0.55rem 1rem;
-    border: 2px solid #d0d7e3;
-    border-radius: 999px;
-    background: white;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 500;
-    color: #444;
-    transition: all 0.15s;
-    white-space: nowrap;
-  }
-  .svc-btn:hover { border-color: #1a56db; color: #1a56db; }
-  .svc-btn.active {
-    background: #1a3a6b;
-    border-color: #1a3a6b;
-    color: white;
-  }
-  .svc-btn .count {
-    display: inline-block;
-    margin-left: 0.4rem;
-    background: rgba(255,255,255,0.25);
-    border-radius: 999px;
-    padding: 0.05rem 0.45rem;
-    font-size: 0.75rem;
-  }
-  .svc-btn:not(.active) .count {
-    background: #eef1f7;
-    color: #666;
-  }
-  .svc-btn.none { opacity: 0.45; cursor: default; pointer-events: none; }
+/* ── Meta bar ────────────────────────────────────────────── */
+.meta-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-bottom: 1.5rem;
+  font-size: .78rem;
+  color: var(--muted);
+}
+.meta-stale {
+  color: var(--danger);
+  font-weight: 500;
+}
+.refresh-link {
+  color: var(--navy);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: .78rem;
+  background: none;
+  border: none;
+  padding: 0;
+}
 
-  /* Date cards */
-  .panel { display: none; }
-  .panel.active { display: block; }
+/* ── Service selector ────────────────────────────────────── */
+.service-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  margin-bottom: 1.75rem;
+  padding-bottom: 2px; /* show focus ring */
+}
+.service-scroll::-webkit-scrollbar { display: none; }
+.services {
+  display: flex;
+  gap: .5rem;
+  white-space: nowrap;
+}
+.svc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .5rem 1rem;
+  border: 1.5px solid var(--border);
+  border-radius: 999px;
+  background: var(--white);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 500;
+  color: var(--muted);
+  transition: border-color .15s, color .15s, background .15s, box-shadow .15s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.svc-btn:hover:not(.zero) {
+  border-color: var(--navy);
+  color: var(--navy);
+  box-shadow: var(--shadow-sm);
+}
+.svc-btn.active {
+  background: var(--navy);
+  border-color: var(--navy);
+  color: var(--white);
+  box-shadow: var(--shadow-md);
+}
+.svc-btn.zero {
+  opacity: .45;
+  cursor: not-allowed;
+}
+.svc-count {
+  font-size: .72rem;
+  font-weight: 600;
+  background: rgba(0,0,0,.08);
+  border-radius: 999px;
+  padding: .05rem .42rem;
+  line-height: 1.5;
+}
+.svc-btn.active .svc-count { background: rgba(255,255,255,.2); }
 
-  .empty-msg {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: #888;
-    font-size: 0.95rem;
-  }
+/* ── Section label ───────────────────────────────────────── */
+.section-head {
+  display: flex;
+  align-items: baseline;
+  gap: .75rem;
+  margin-bottom: 1rem;
+}
+.section-label {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--navy);
+}
+.section-count {
+  font-size: .78rem;
+  color: var(--muted);
+}
 
-  .cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 1rem;
-  }
+/* ── Date rows ───────────────────────────────────────────── */
+.panel { display: none; }
+.panel.active { display: block; }
 
-  .card {
-    background: white;
-    border-radius: 10px;
-    border: 1px solid #e4e8f0;
-    overflow: hidden;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-  }
-  .card-head {
-    background: #1a3a6b;
-    color: white;
-    padding: 0.65rem 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-  }
-  .card-head .date { font-weight: 600; font-size: 0.95rem; }
-  .card-head .day { font-size: 0.78rem; opacity: 0.75; }
-  .card-head .badge {
-    background: rgba(255,255,255,0.2);
-    border-radius: 999px;
-    padding: 0.1rem 0.6rem;
-    font-size: 0.75rem;
-    white-space: nowrap;
-  }
-  .card-body { padding: 0.75rem 1rem 1rem; }
-  .times {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.4rem;
-    margin-top: 0.25rem;
-  }
-  .time-chip {
-    background: #eef4ff;
-    color: #1a3a6b;
-    border-radius: 6px;
-    padding: 0.25rem 0.5rem;
-    font-size: 0.78rem;
-    font-family: monospace;
-    font-weight: 500;
-  }
+.date-list {
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+}
 
-  .book-btn {
-    display: block;
-    width: 100%;
-    margin-top: 1rem;
-    padding: 0.55rem 0;
-    background: #1a56db;
-    color: white;
-    text-align: center;
-    text-decoration: none;
-    border-radius: 7px;
-    font-size: 0.82rem;
-    font-weight: 500;
-    transition: background 0.15s;
-  }
-  .book-btn:hover { background: #1447c0; }
+.date-row {
+  background: var(--white);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  transition: box-shadow .15s;
+}
+.date-row:hover { box-shadow: var(--shadow-md); }
 
-  .loader {
-    text-align: center;
-    padding: 3rem;
-    color: #888;
-    font-size: 0.9rem;
-  }
-  .error-msg {
-    background: #fff3f3;
-    border: 1px solid #f5c6c6;
-    border-radius: 8px;
-    padding: 1rem 1.25rem;
-    color: #c0392b;
-    font-size: 0.88rem;
-  }
+.row-main {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  align-items: center;
+  gap: 1rem;
+  padding: .85rem 1rem .85rem 1.1rem;
+}
 
-  @media (max-width: 480px) {
-    header { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-    .cards { grid-template-columns: 1fr; }
-  }
+.row-date-block { flex-shrink: 0; }
+.row-date {
+  font-family: 'Playfair Display', serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--navy);
+  line-height: 1.1;
+}
+.row-day {
+  font-size: .72rem;
+  color: var(--muted);
+  margin-top: .15rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.row-middle { min-width: 0; }
+
+/* Time rail */
+.rail-wrap {
+  position: relative;
+  height: 22px;
+  background: var(--rail-bg);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: .4rem;
+}
+.rail-mark {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 3.2%;  /* ≈ 8 min / 250 min range * 100 */
+  min-width: 6px;
+  background: var(--avail);
+  border-radius: 2px;
+  transition: opacity .1s;
+}
+.rail-mark:hover { opacity: .75; }
+.rail-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: .62rem;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .02em;
+}
+
+/* Expandable time list */
+.time-list-wrap {
+  border-top: 1px solid var(--paper-dark);
+  background: var(--paper);
+  padding: .75rem 1.1rem;
+  display: none;
+}
+.date-row.expanded .time-list-wrap { display: block; }
+.time-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem;
+}
+.time-chip {
+  font-family: 'Courier New', monospace;
+  font-size: .76rem;
+  font-weight: 600;
+  background: var(--avail-bg);
+  color: var(--avail);
+  border-radius: 4px;
+  padding: .25rem .5rem;
+  letter-spacing: .02em;
+}
+
+.row-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .4rem;
+  flex-shrink: 0;
+}
+.badge {
+  font-size: .68rem;
+  font-weight: 600;
+  background: var(--avail-bg);
+  color: var(--avail);
+  border-radius: 999px;
+  padding: .2rem .55rem;
+  white-space: nowrap;
+}
+.book-btn {
+  display: inline-block;
+  padding: .4rem .85rem;
+  background: var(--navy);
+  color: var(--white);
+  border-radius: var(--radius-sm);
+  text-decoration: none;
+  font-size: .76rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background .15s;
+  letter-spacing: .01em;
+}
+.book-btn:hover { background: var(--navy-mid); }
+
+.expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: .7rem;
+  color: var(--muted);
+  padding: 0;
+  text-decoration: underline;
+  white-space: nowrap;
+}
+.expand-btn:hover { color: var(--navy); }
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 3.5rem 1rem;
+  color: var(--muted);
+}
+.empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: .75rem;
+  opacity: .4;
+}
+.empty-title {
+  font-family: 'Playfair Display', serif;
+  font-size: 1.05rem;
+  color: var(--navy);
+  margin-bottom: .35rem;
+}
+.empty-sub { font-size: .82rem; }
+
+/* ── Error / alert ───────────────────────────────────────── */
+.alert {
+  background: var(--danger-bg);
+  border: 1px solid #FCA5A5;
+  border-radius: var(--radius-sm);
+  padding: .85rem 1.1rem;
+  color: var(--danger);
+  font-size: .84rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Skeleton loader ─────────────────────────────────────── */
+.skeleton-wrap { display: flex; flex-direction: column; gap: .5rem; margin-top: .5rem; }
+.skeleton-row {
+  height: 76px;
+  border-radius: var(--radius);
+  background: linear-gradient(90deg, var(--paper-dark) 25%, var(--border) 50%, var(--paper-dark) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Footer note ─────────────────────────────────────────── */
+.footer-note {
+  margin-top: 2rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: .73rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.7;
+}
+.footer-note a { color: var(--navy); }
+
+/* ── Responsive ──────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .header-title { font-size: .95rem; }
+  .row-main { grid-template-columns: 72px 1fr auto; gap: .6rem; padding: .75rem .8rem; }
+  .row-date { font-size: .9rem; }
+  .book-btn { padding: .35rem .65rem; font-size: .72rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .live-dot, .skeleton-row { animation: none; }
+}
 </style>
 </head>
 <body>
 
-<header>
-  <img src="https://upload.wikimedia.org/wikipedia/commons/4/41/Flag_of_India.svg" alt="India flag">
-  <div>
-    <h1>Indian Embassy Netherlands — Appointment Slots</h1>
-    <p>Select a service to see available dates and times</p>
+<header class="header">
+  <div class="header-inner">
+    <div class="flag" aria-hidden="true">
+      <div class="flag-stripe saffron"></div>
+      <div class="flag-stripe white"><span class="ashoka">☸</span></div>
+      <div class="flag-stripe green"></div>
+    </div>
+    <div class="header-text">
+      <div class="header-title">Indian Embassy Netherlands</div>
+      <div class="header-sub"><span class="live-dot" id="live-dot"></span>Appointment Availability</div>
+    </div>
   </div>
 </header>
 
 <div class="container">
-  <div class="meta">
-    <span id="last-updated">Loading data…</span>
-    <span id="refresh-status"></span>
+  <div class="meta-bar">
+    <span id="last-updated">Loading…</span>
+    <button class="refresh-link" onclick="loadData()" id="refresh-btn" style="display:none">Refresh now</button>
   </div>
-
   <div id="app">
-    <div class="loader">Fetching slot data…</div>
+    <div class="skeleton-wrap">
+      <div class="skeleton-row"></div>
+      <div class="skeleton-row"></div>
+      <div class="skeleton-row"></div>
+      <div class="skeleton-row" style="opacity:.6"></div>
+      <div class="skeleton-row" style="opacity:.35"></div>
+    </div>
+  </div>
+  <div class="footer-note">
+    Slot data refreshes every 10 minutes during embassy hours. This page is not affiliated with the
+    <a href="https://appointment.indianembassynetherlands.com/book_appointment" target="_blank" rel="noopener">Indian Embassy Netherlands</a>
+    — always confirm availability on the official site before travelling.
   </div>
 </div>
 
 <script>
 const SLOTS_URL = './slots.json';
-const REFRESH_MS = 5 * 60 * 1000; // re-fetch every 5 min (matches cron cadence)
+const REFRESH_MS = 10 * 60 * 1000;
 const BOOKING_URL = 'https://appointment.indianembassynetherlands.com/book_appointment';
+
+// Time rail: 09:00 → 14:00 = 300 min window
+const RAIL_START = 9 * 60;
+const RAIL_END   = 14 * 60;
+const RAIL_RANGE = RAIL_END - RAIL_START;
 
 let data = null;
 let activeService = null;
+let refreshTimer = null;
+
+function parseTimeMinutes(label) {
+  // "0930 – 0938" → 570 (mins from midnight)
+  const m = label.match(/^(\d{2})(\d{2})/);
+  if (!m) return null;
+  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+}
+
+function formatDate(ddmmyyyy) {
+  // "07-07-2026" → "7 Jul 2026"
+  const [d, mo, y] = ddmmyyyy.split('-');
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return `${parseInt(d, 10)} ${months[parseInt(mo, 10) - 1]} ${y}`;
+}
+
+function railHtml(times) {
+  const marks = times.map(t => {
+    const mins = parseTimeMinutes(t);
+    if (mins === null) return '';
+    const pct = Math.max(0, Math.min(97, (mins - RAIL_START) / RAIL_RANGE * 100)).toFixed(2);
+    return `<span class="rail-mark" style="left:${pct}%" title="${t}"></span>`;
+  }).join('');
+  return `
+    <div class="rail-wrap" aria-label="Time availability rail">${marks}</div>
+    <div class="rail-labels">
+      <span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span><span>14:00</span>
+    </div>`;
+}
+
+function timeSince(isoStr) {
+  const diff = Math.floor((Date.now() - new Date(isoStr)) / 60000);
+  if (diff < 1)  return 'just now';
+  if (diff === 1) return '1 min ago';
+  if (diff < 60) return `${diff} mins ago`;
+  const h = Math.floor(diff / 60);
+  return `${h} hr${h > 1 ? 's' : ''} ago`;
+}
+
+function isStale(isoStr) {
+  return (Date.now() - new Date(isoStr)) > 90 * 60 * 1000; // > 90 min
+}
 
 async function loadData() {
-  document.getElementById('refresh-status').textContent = '';
+  document.getElementById('refresh-btn').style.display = 'none';
   try {
     const res = await fetch(SLOTS_URL + '?t=' + Date.now());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     data = await res.json();
     render();
-    scheduleRefresh();
+    if (refreshTimer) clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(loadData, REFRESH_MS);
   } catch (e) {
     document.getElementById('app').innerHTML =
-      `<div class="error-msg">Could not load slot data: ${e.message}.<br>
-       Make sure <code>slots.json</code> is in the same directory as this page.</div>`;
+      `<div class="alert">Could not load slot data: ${e.message}.<br>
+       Make sure <code>slots.json</code> is deployed alongside this page.</div>`;
+    document.getElementById('last-updated').textContent = 'Data unavailable';
   }
 }
 
-function scheduleRefresh() {
-  setTimeout(async () => {
-    document.getElementById('refresh-status').textContent = 'Refreshing…';
-    document.getElementById('refresh-status').className = 'refreshing';
-    await loadData();
-  }, REFRESH_MS);
-}
-
-function fmt(iso) {
-  const d = new Date(iso);
-  return d.toLocaleString('en-NL', {
-    day: 'numeric', month: 'long', year: 'numeric',
-    hour: '2-digit', minute: '2-digit', timeZoneName: 'short'
-  });
+function updateMeta() {
+  if (!data) return;
+  const ago = timeSince(data.generated_at);
+  const stale = isStale(data.generated_at);
+  const el = document.getElementById('last-updated');
+  el.innerHTML = stale
+    ? `<span class="meta-stale">⚠ Data may be stale — last updated ${ago}</span>`
+    : `Updated ${ago}`;
+  document.getElementById('live-dot').style.background = stale ? '#F59E0B' : '#16A34A';
+  document.getElementById('refresh-btn').style.display = '';
 }
 
 function render() {
+  updateMeta();
+  setInterval(updateMeta, 30000); // keep "X mins ago" ticking
+
   const services = data.services;
   const ids = Object.keys(services);
 
-  // Update meta
-  document.getElementById('last-updated').textContent =
-    'Last updated: ' + fmt(data.generated_at);
-
-  // Pick first service with dates if none active yet
   if (!activeService || !services[activeService]) {
     activeService = ids.find(id => services[id].dates.length > 0) || ids[0];
   }
 
-  // Build service buttons
-  const btns = ids.map(id => {
+  // Service pills
+  const pills = ids.map(id => {
     const svc = services[id];
     const count = svc.dates.length;
-    const cls = ['svc-btn', id === activeService ? 'active' : '', count === 0 ? 'none' : ''].join(' ').trim();
-    return `<button class="${cls}" data-id="${id}" onclick="selectService('${id}')">
-      ${svc.name}<span class="count">${count}</span>
-    </button>`;
+    const isActive = id === activeService;
+    const isZero  = count === 0;
+    return `<button
+      class="svc-btn ${isActive ? 'active' : ''} ${isZero ? 'zero' : ''}"
+      data-id="${id}"
+      onclick="selectService('${id}')"
+      ${isZero ? 'disabled aria-disabled="true"' : ''}
+      aria-pressed="${isActive}"
+    >${svc.name}<span class="svc-count">${count}</span></button>`;
   }).join('');
 
-  // Build panels
+  // Panels
   const panels = ids.map(id => {
     const svc = services[id];
     const isActive = id === activeService;
+
     let body;
     if (svc.dates.length === 0) {
-      body = '<div class="empty-msg">No available slots in this period.</div>';
+      body = `<div class="empty-state">
+        <div class="empty-icon">📅</div>
+        <div class="empty-title">No available dates</div>
+        <div class="empty-sub">Check back soon — slots are released periodically.</div>
+      </div>`;
     } else {
-      const cards = svc.dates.map(d => {
+      const rows = svc.dates.map(d => {
         const chips = d.times.map(t => `<span class="time-chip">${t}</span>`).join('');
-        return `<div class="card">
-          <div class="card-head">
-            <div>
-              <div class="date">${d.date}</div>
-              <div class="day">${d.day}</div>
+        const rowId = `row-${id}-${d.date.replace(/-/g, '')}`;
+        return `<div class="date-row" id="${rowId}">
+          <div class="row-main">
+            <div class="row-date-block">
+              <div class="row-date">${formatDate(d.date)}</div>
+              <div class="row-day">${d.day.slice(0,3)}</div>
             </div>
-            <div class="badge">${d.slots_available} slot${d.slots_available !== 1 ? 's' : ''}</div>
+            <div class="row-middle">
+              ${railHtml(d.times)}
+            </div>
+            <div class="row-actions">
+              <span class="badge">${d.slots_available} slot${d.slots_available !== 1 ? 's' : ''}</span>
+              <a class="book-btn" href="${data.booking_url}" target="_blank" rel="noopener">Book →</a>
+              <button class="expand-btn" onclick="toggleExpand('${rowId}')">show times</button>
+            </div>
           </div>
-          <div class="card-body">
-            <div class="times">${chips}</div>
-            <a class="book-btn" href="${data.booking_url}" target="_blank" rel="noopener">Book this date →</a>
+          <div class="time-list-wrap">
+            <div class="time-chips">${chips}</div>
           </div>
         </div>`;
       }).join('');
-      body = `<div class="cards">${cards}</div>`;
+      body = `<div class="section-head">
+        <span class="section-label">${svc.name}</span>
+        <span class="section-count">${svc.dates.length} date${svc.dates.length !== 1 ? 's' : ''} available</span>
+      </div>
+      <div class="date-list">${rows}</div>`;
     }
     return `<div class="panel ${isActive ? 'active' : ''}" id="panel-${id}">${body}</div>`;
   }).join('');
 
   document.getElementById('app').innerHTML =
-    `<div class="services">${btns}</div>${panels}`;
+    `<div class="service-scroll"><div class="services">${pills}</div></div>${panels}`;
 }
 
 function selectService(id) {
   activeService = id;
-  document.querySelectorAll('.svc-btn').forEach(b => b.classList.toggle('active', b.dataset.id === id));
-  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + id));
+  document.querySelectorAll('.svc-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.id === id);
+    b.setAttribute('aria-pressed', b.dataset.id === id);
+  });
+  document.querySelectorAll('.panel').forEach(p =>
+    p.classList.toggle('active', p.id === 'panel-' + id)
+  );
+}
+
+function toggleExpand(rowId) {
+  const row = document.getElementById(rowId);
+  const expanded = row.classList.toggle('expanded');
+  row.querySelector('.expand-btn').textContent = expanded ? 'hide times' : 'show times';
 }
 
 loadData();

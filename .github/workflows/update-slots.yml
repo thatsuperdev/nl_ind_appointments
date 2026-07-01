@@ -2,9 +2,9 @@ name: Update Appointment Slots
 
 on:
   schedule:
-    # Quick scan: every 5 min during embassy hours (06:00-14:00 UTC = 08:00-16:00 Amsterdam), Mon-Sat
+    # Quick scan: every 10 min during embassy hours (06:00-14:00 UTC = 08:00-16:00 Amsterdam), Mon-Sat
     # Checks only the next 14 days (~14 API calls). Merges with existing full data.
-    - cron: '*/5 6-14 * * 1-6'
+    - cron: '*/10 6-14 * * 1-6'
     # Full scan: every 2 hours during embassy hours. Checks all ~79 weekdays (2 months).
     - cron: '0 */2 * * 1-6'
   workflow_dispatch:
