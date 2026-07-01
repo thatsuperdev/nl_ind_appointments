@@ -324,6 +324,12 @@ body {
   font-style: italic;
 }
 .time-unknown a { color: var(--navy); }
+.time-note {
+  margin-top: .45rem;
+  font-size: .65rem;
+  color: var(--muted);
+  font-style: italic;
+}
 
 .row-actions {
   display: flex;
@@ -520,7 +526,8 @@ function railHtml(times) {
     <div class="rail-labels">
       <span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span><span>14:00</span>
     </div>
-    <div class="time-chips">${chipsHtml}</div>`;
+    <div class="time-chips">${chipsHtml}</div>
+    ${times.length > 0 ? '<div class="time-note">Times shown are all available windows for this day — exact allocation per service may differ on the booking site.</div>' : ''}`;
 }
 
 function timeSince(isoStr) {
