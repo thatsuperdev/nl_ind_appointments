@@ -259,64 +259,63 @@ body {
 
 .row-middle { min-width: 0; }
 
-/* Time rail */
+/* Time rail — visual density indicator */
 .rail-wrap {
   position: relative;
-  height: 22px;
+  height: 14px;
   background: var(--rail-bg);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
-  margin-bottom: .4rem;
+  margin-bottom: .3rem;
 }
 .rail-mark {
   position: absolute;
   top: 0;
   height: 100%;
-  width: 3.2%;  /* ≈ 8 min / 250 min range * 100 */
-  min-width: 6px;
+  width: 3.2%;
+  min-width: 5px;
   background: var(--avail);
   border-radius: 2px;
-  transition: opacity .1s;
 }
-.rail-mark:hover { opacity: .75; }
 .rail-labels {
   display: flex;
   justify-content: space-between;
-  font-size: .62rem;
+  font-size: .58rem;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
-  letter-spacing: .02em;
+  letter-spacing: .01em;
+  margin-bottom: .6rem;
 }
 
-/* Expandable time list */
-.time-list-wrap {
-  border-top: 1px solid var(--paper-dark);
-  background: var(--paper);
-  padding: .75rem 1.1rem;
-  display: none;
-}
-.date-row.expanded .time-list-wrap { display: block; }
+/* Time chips — always visible below the rail */
 .time-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: .35rem;
+  gap: .3rem;
 }
 .time-chip {
   font-family: 'Courier New', monospace;
-  font-size: .76rem;
+  font-size: .72rem;
   font-weight: 600;
   background: var(--avail-bg);
   color: var(--avail);
   border-radius: 4px;
-  padding: .25rem .5rem;
+  padding: .2rem .45rem;
   letter-spacing: .02em;
+  white-space: nowrap;
+}
+.time-overflow {
+  font-size: .7rem;
+  color: var(--muted);
+  align-self: center;
+  padding-left: .15rem;
 }
 
 .row-actions {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: .4rem;
+  gap: .5rem;
   flex-shrink: 0;
 }
 .badge {
@@ -342,19 +341,6 @@ body {
   letter-spacing: .01em;
 }
 .book-btn:hover { background: var(--navy-mid); }
-
-.expand-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-  font-size: .7rem;
-  color: var(--muted);
-  padding: 0;
-  text-decoration: underline;
-  white-space: nowrap;
-}
-.expand-btn:hover { color: var(--navy); }
 
 /* ── Empty state ─────────────────────────────────────────── */
 .empty-state {
@@ -495,13 +481,21 @@ function railHtml(times) {
     const mins = parseTimeMinutes(t);
     if (mins === null) return '';
     const pct = Math.max(0, Math.min(97, (mins - RAIL_START) / RAIL_RANGE * 100)).toFixed(2);
-    return `<span class="rail-mark" style="left:${pct}%" title="${t}"></span>`;
+    return `<span class="rail-mark" style="left:${pct}%"></span>`;
   }).join('');
+
+  const MAX_VISIBLE = 10;
+  const chips = times.slice(0, MAX_VISIBLE)
+    .map(t => `<span class="time-chip">${t}</span>`).join('');
+  const overflow = times.length > MAX_VISIBLE
+    ? `<span class="time-overflow">+${times.length - MAX_VISIBLE} more</span>` : '';
+
   return `
-    <div class="rail-wrap" aria-label="Time availability rail">${marks}</div>
+    <div class="rail-wrap" aria-label="Time availability">${marks}</div>
     <div class="rail-labels">
       <span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span><span>14:00</span>
-    </div>`;
+    </div>
+    <div class="time-chips">${chips}${overflow}</div>`;
 }
 
 function timeSince(isoStr) {
@@ -586,9 +580,7 @@ function render() {
       </div>`;
     } else {
       const rows = svc.dates.map(d => {
-        const chips = d.times.map(t => `<span class="time-chip">${t}</span>`).join('');
-        const rowId = `row-${id}-${d.date.replace(/-/g, '')}`;
-        return `<div class="date-row" id="${rowId}">
+        return `<div class="date-row">
           <div class="row-main">
             <div class="row-date-block">
               <div class="row-date">${formatDate(d.date)}</div>
@@ -600,11 +592,7 @@ function render() {
             <div class="row-actions">
               <span class="badge">${d.slots_available} slot${d.slots_available !== 1 ? 's' : ''}</span>
               <a class="book-btn" href="${data.booking_url}" target="_blank" rel="noopener">Book →</a>
-              <button class="expand-btn" onclick="toggleExpand('${rowId}')">show times</button>
             </div>
-          </div>
-          <div class="time-list-wrap">
-            <div class="time-chips">${chips}</div>
           </div>
         </div>`;
       }).join('');
@@ -632,11 +620,6 @@ function selectService(id) {
   );
 }
 
-function toggleExpand(rowId) {
-  const row = document.getElementById(rowId);
-  const expanded = row.classList.toggle('expanded');
-  row.querySelector('.expand-btn').textContent = expanded ? 'hide times' : 'show times';
-}
 
 loadData();
 </script>
