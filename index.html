@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Indian Embassy NL — Appointment Availability</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-Q31RGTNB00"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-Q31RGTNB00');
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
@@ -436,7 +444,7 @@ body {
 <div class="container">
   <div class="meta-bar">
     <span id="last-updated">Loading…</span>
-    <button class="refresh-link" onclick="loadData()" id="refresh-btn" style="display:none">Refresh now</button>
+    <button class="refresh-link" onclick="gtrack('manual_refresh', {}); loadData()" id="refresh-btn" style="display:none">Refresh now</button>
   </div>
   <div id="app">
     <div class="skeleton-wrap">
@@ -528,6 +536,10 @@ function isStale(isoStr) {
   return (Date.now() - new Date(isoStr)) > 90 * 60 * 1000; // > 90 min
 }
 
+function gtrack(event, params) {
+  if (typeof gtag === 'function') gtag('event', event, params);
+}
+
 async function loadData() {
   document.getElementById('refresh-btn').style.display = 'none';
   try {
@@ -555,6 +567,7 @@ function updateMeta() {
     : `Updated ${ago}`;
   document.getElementById('live-dot').style.background = stale ? '#F59E0B' : '#16A34A';
   document.getElementById('refresh-btn').style.display = '';
+  if (stale) gtrack('data_stale', { minutes_old: Math.floor((Date.now() - new Date(data.generated_at)) / 60000) });
 }
 
 function render() {
@@ -608,7 +621,8 @@ function render() {
             </div>
             <div class="row-actions">
               <span class="badge">${d.slots_available} slot${d.slots_available !== 1 ? 's' : ''}</span>
-              <a class="book-btn" href="${data.booking_url}" target="_blank" rel="noopener">Book →</a>
+              <a class="book-btn" href="${data.booking_url}" target="_blank" rel="noopener"
+                 onclick="gtrack('book_click', { service_id: '${id}', service_name: '${svc.name}', date: '${d.date}', slots_available: ${d.slots_available} })">Book →</a>
             </div>
           </div>
         </div>`;
@@ -628,6 +642,7 @@ function render() {
 
 function selectService(id) {
   activeService = id;
+  gtrack('select_service', { service_id: id, service_name: data?.services?.[id]?.name });
   document.querySelectorAll('.svc-btn').forEach(b => {
     b.classList.toggle('active', b.dataset.id === id);
     b.setAttribute('aria-pressed', b.dataset.id === id);
