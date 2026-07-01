@@ -99,7 +99,7 @@ body {
   box-shadow: 0 2px 12px rgba(0,0,0,.25);
 }
 .header-inner {
-  max-width: 900px;
+  max-width: 1180px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -183,7 +183,7 @@ body {
 }
 
 /* ── Main layout ─────────────────────────────────────────── */
-.container { max-width: 900px; margin: 0 auto; padding: 1.25rem 1rem 3rem; }
+.container { max-width: 1180px; margin: 0 auto; padding: 1.75rem 1.25rem 3.5rem; }
 
 /* ── Meta bar ────────────────────────────────────────────── */
 .disclaimer-bar {
@@ -201,10 +201,10 @@ body {
   align-items: center;
   gap: .6rem;
   flex-wrap: wrap;
-  font-size: .78rem;
+  font-size: .86rem;
   color: var(--muted);
   white-space: nowrap;
-  padding-top: .3rem;
+  padding-top: .35rem;
 }
 .meta-stale {
   color: var(--danger);
@@ -230,7 +230,7 @@ body {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
-  margin-bottom: 1.1rem;
+  margin-bottom: 1.3rem;
   padding-bottom: 2px; /* show focus ring */
 }
 .service-scroll::-webkit-scrollbar { display: none; }
@@ -242,14 +242,14 @@ body {
 .svc-btn {
   display: inline-flex;
   align-items: center;
-  gap: .38rem;
-  padding: .4rem .85rem;
+  gap: .48rem;
+  padding: .58rem 1.1rem;
   border: 1.5px solid var(--border);
   border-radius: 999px;
   background: var(--white);
   cursor: pointer;
   font-family: inherit;
-  font-size: .78rem;
+  font-size: .92rem;
   font-weight: 500;
   color: var(--muted);
   transition: border-color .15s, color .15s, background .15s, box-shadow .15s;
@@ -287,18 +287,18 @@ body {
   align-items: flex-start;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: .3rem 1rem;
-  margin-bottom: .85rem;
+  gap: .35rem 1rem;
+  margin-bottom: 1rem;
 }
-.content-head-text { display: flex; flex-direction: column; gap: .15rem; }
+.content-head-text { display: flex; flex-direction: column; gap: .2rem; }
 .section-label {
   font-family: 'Playfair Display', serif;
-  font-size: 1rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: var(--navy);
 }
 .section-count {
-  font-size: .78rem;
+  font-size: .88rem;
   color: var(--muted);
 }
 
@@ -315,7 +315,7 @@ body {
   align-items: start;
 }
 @media (min-width: 760px) {
-  .calendar-layout { grid-template-columns: minmax(0, 620px) minmax(200px, 260px); }
+  .calendar-layout { grid-template-columns: minmax(0, 860px) minmax(260px, 320px); }
 }
 
 /* The two months sit inside one bound "ledger" — a nod to the embassy's
@@ -323,7 +323,7 @@ body {
 .calendar-wrap {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  max-width: 620px;
+  max-width: 860px;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -331,7 +331,7 @@ body {
 }
 .calendar {
   min-width: 0;
-  padding: .9rem 1rem 1.05rem;
+  padding: 1.3rem 1.5rem 1.5rem;
 }
 .calendar + .calendar {
   border-left: 1px solid var(--border);
@@ -339,39 +339,39 @@ body {
 }
 .calendar-title {
   font-family: 'Playfair Display', serif;
-  font-size: .82rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--navy);
   display: inline-block;
-  padding-bottom: .26rem;
-  margin-bottom: .55rem;
+  padding-bottom: .35rem;
+  margin-bottom: .8rem;
   border-bottom: 2px solid var(--gold);
 }
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: .18rem;
+  gap: .3rem;
 }
 .cal-dow {
-  font-size: .56rem;
+  font-size: .72rem;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .06em;
   color: var(--muted);
   text-align: center;
-  padding-bottom: .28rem;
+  padding-bottom: .4rem;
 }
 .cal-cell {
   aspect-ratio: 1;
-  border-radius: 5px;
+  border-radius: 7px;
   border: 1px solid transparent;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 1px;
+  gap: 2px;
   font-family: inherit;
-  font-size: .72rem;
+  font-size: .96rem;
   font-variant-numeric: tabular-nums;
   transition: border-color .12s, box-shadow .12s, background-color .12s, transform .12s;
 }
@@ -413,11 +413,11 @@ body {
 .cal-daynum { line-height: 1; }
 .cal-count {
   margin-top: 2px;
-  font-size: .5rem;
+  font-size: .64rem;
   font-weight: 700;
   letter-spacing: .01em;
   line-height: 1;
-  padding: .1rem .3rem;
+  padding: .14rem .4rem;
   border-radius: 4px;
   background: rgba(22,163,74,.16);
   color: #0F5C33;
@@ -430,22 +430,22 @@ body {
 .cal-legend {
   display: flex;
   flex-wrap: wrap;
-  gap: 1.1rem;
-  margin-top: .85rem;
-  font-size: .7rem;
+  gap: 1.4rem;
+  margin-top: 1.2rem;
+  font-size: .82rem;
   color: var(--muted);
 }
 .legend-dot {
-  width: 9px;
-  height: 9px;
+  width: 11px;
+  height: 11px;
   border-radius: 3px;
   display: inline-block;
-  margin-right: .36rem;
+  margin-right: .4rem;
   vertical-align: -1px;
 }
 
 .cal-detail {
-  padding: .75rem 1rem;
+  padding: 1.1rem 1.35rem;
   background: var(--white);
   border: 1px solid var(--border);
   border-left: 3px solid var(--gold);
@@ -456,7 +456,7 @@ body {
   min-height: 0;
 }
 @media (min-width: 760px) {
-  .cal-detail { max-height: 452px; }
+  .cal-detail { max-height: 578px; }
 }
 .cal-detail-title {
   display: flex;
@@ -465,40 +465,40 @@ body {
   gap: .75rem;
   flex-wrap: wrap;
   font-family: 'Playfair Display', serif;
-  font-size: .84rem;
+  font-size: 1.02rem;
   font-weight: 700;
   color: var(--navy);
-  margin-bottom: .55rem;
+  margin-bottom: .7rem;
 }
 @media (min-width: 760px) {
-  .cal-detail-title { flex-direction: column; align-items: flex-start; gap: .3rem; }
+  .cal-detail-title { flex-direction: column; align-items: flex-start; gap: .35rem; }
 }
 .cal-detail-count {
   display: inline-flex;
   align-items: center;
-  padding: .14rem .48rem;
+  padding: .2rem .6rem;
   border-radius: 999px;
   background: var(--avail-bg);
   color: #0F5C33;
-  font-size: .64rem;
+  font-size: .76rem;
   font-weight: 700;
   white-space: nowrap;
   font-family: 'Inter', sans-serif;
 }
 .cal-detail-empty {
-  font-size: .8rem;
+  font-size: .92rem;
   color: var(--muted);
 }
 .time-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: .3rem .36rem;
+  gap: .34rem .4rem;
 }
 @media (min-width: 760px) {
   .time-chips {
     flex-direction: column;
     flex-wrap: nowrap;
-    gap: .3rem;
+    gap: .34rem;
     overflow-y: auto;
     padding-right: .2rem;
     scrollbar-width: thin;
@@ -509,12 +509,12 @@ body {
 .time-chip {
   display: inline-flex;
   align-items: center;
-  font-size: .7rem;
+  font-size: .84rem;
   font-weight: 500;
   background: var(--gold-light);
   border: 1px solid #e8d49a;
-  border-radius: 5px;
-  padding: .22rem .5rem;
+  border-radius: 6px;
+  padding: .34rem .68rem;
   color: #6b4c00;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
@@ -584,7 +584,7 @@ body {
   .header-book { padding: .42rem .58rem; font-size: .72rem; }
   .calendar-wrap { grid-template-columns: 1fr; }
   .calendar + .calendar { border-left: none; border-top: 1px solid var(--border); }
-  .cal-cell { font-size: .72rem; }
+  .cal-cell { font-size: .78rem; }
   .skeleton-wrap { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 380px) {
