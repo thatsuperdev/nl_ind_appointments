@@ -3,7 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Indian Embassy NL — Appointment Availability</title>
+<title>Indian Embassy Netherlands Appointment Slots | Availability Checker</title>
+<meta name="description" content="Check recently refreshed Indian Embassy Netherlands appointment slots for passport, visa, OCI, surrender and miscellaneous consular services in The Hague.">
+<meta name="robots" content="index,follow">
+<meta name="application-name" content="Indian Embassy Netherlands Appointment Availability">
+<meta name="theme-color" content="#1A2B5E">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Indian Embassy Netherlands Appointment Availability">
+<meta property="og:title" content="Indian Embassy Netherlands Appointment Slots">
+<meta property="og:description" content="Unofficial availability checker for Indian Embassy Netherlands passport, visa, OCI, surrender and consular appointment slots.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Indian Embassy Netherlands Appointment Slots">
+<meta name="twitter:description" content="Check recently refreshed appointment availability for Indian Embassy Netherlands consular services in The Hague.">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Indian Embassy Netherlands Appointment Availability",
+  "description": "Unofficial appointment slot availability checker for Indian Embassy Netherlands passport, visa, OCI, surrender and miscellaneous consular services in The Hague.",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Any",
+  "isAccessibleForFree": true,
+  "about": [
+    "Indian Embassy Netherlands appointment slots",
+    "Passport Services",
+    "Visa Services",
+    "OCI Services",
+    "Surrender Certificate",
+    "Miscellaneous Consular Services"
+  ],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "EUR"
+  }
+}
+</script>
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q31RGTNB00"></script>
 <script>
@@ -446,7 +481,7 @@ body {
       <div class="flag-stripe green"></div>
     </div>
     <div class="header-text">
-      <div class="header-title">Indian Embassy Netherlands</div>
+      <h1 class="header-title">Indian Embassy Netherlands</h1>
       <div class="header-sub"><span class="live-dot" id="live-dot"></span>Appointment Availability</div>
     </div>
     <a class="header-book" href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener"
@@ -457,7 +492,7 @@ body {
 <div class="disclaimer-bar">
   Unofficial tool — not affiliated with the <a href="https://www.indianembassythehague.nl" target="_blank" rel="noopener">Indian Embassy Netherlands</a>. Always verify on the <a href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener">official booking site</a>.
 </div>
-<div class="container">
+<main class="container" aria-label="Appointment slot availability">
   <div class="meta-bar">
     <span id="last-updated">Loading…</span>
     <button class="refresh-link" onclick="loadData({ manual: true })" id="refresh-btn" style="display:none">Refresh now</button>
@@ -475,7 +510,7 @@ body {
     Slots are reported by the embassy booking API and refresh every 10 minutes.
     Always confirm on the <a href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener">official booking site</a>.
   </div>
-</div>
+</main>
 
 <script>
 const SLOTS_URL = './slots.json';
