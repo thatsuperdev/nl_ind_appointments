@@ -1,20 +1,11 @@
 {
-  "generated_at": "2026-07-01T16:15:12.583531+00:00",
+  "generated_at": "2026-07-01T16:28:17.729880+00:00",
   "period_end": "31-08-2026",
   "booking_url": "https://appointment.indianembassynetherland.com/book_appointment",
   "services": {
     "1": {
       "name": "Passport Services",
       "dates": [
-        {
-          "date": "12-08-2026",
-          "day": "Wednesday",
-          "slots_available": 2,
-          "times": [
-            "0954 \u2013 1002",
-            "1050 \u2013 1058"
-          ]
-        },
         {
           "date": "13-08-2026",
           "day": "Thursday",
@@ -30,9 +21,8 @@
         {
           "date": "17-08-2026",
           "day": "Monday",
-          "slots_available": 7,
+          "slots_available": 6,
           "times": [
-            "1026 \u2013 1034",
             "1042 \u2013 1050",
             "1050 \u2013 1058",
             "1058 \u2013 1106",
@@ -267,7 +257,6 @@
           "day": "Monday",
           "slots_available": 3,
           "times": [
-            "1026 \u2013 1034",
             "1042 \u2013 1050",
             "1050 \u2013 1058",
             "1058 \u2013 1106",
@@ -490,7 +479,6 @@
           "day": "Monday",
           "slots_available": 1,
           "times": [
-            "1026 \u2013 1034",
             "1042 \u2013 1050",
             "1050 \u2013 1058",
             "1058 \u2013 1106",
