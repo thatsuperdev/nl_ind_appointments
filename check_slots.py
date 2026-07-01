@@ -70,12 +70,48 @@ def get_weekdays(months_ahead: int = 2, days_ahead: int | None = None) -> list[d
     return days
 
 
-def fetch_slot_data(session: requests.Session, token: str, appt_date: date) -> dict:
-    """Call the API for a single date, retrying up to 3 times on transient errors."""
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "X-Requested-With": "XMLHttpRequest",
+    "Referer": BOOKING_URL,
+}
+
+TOKEN_PATTERNS = [
+    r'<meta[^>]+name=["\']csrf-token["\'][^>]+content=["\']([^"\']+)',
+    r'<input[^>]+name=["\']_token["\'][^>]+value=["\']([^"\']+)',
+    r'"_token"\s*:\s*"([^"]+)"',
+]
+
+
+def fresh_session_and_token() -> tuple[requests.Session, str]:
+    """Create a new session, fetch the booking page, and extract a fresh CSRF token."""
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    page = session.get(BOOKING_URL, timeout=15)
+    page.raise_for_status()
+    for pat in TOKEN_PATTERNS:
+        m = re.search(pat, page.text)
+        if m:
+            return session, m.group(1)
+    raise RuntimeError("Could not extract CSRF token from booking page")
+
+
+def fetch_slot_data(appt_date: date) -> dict:
+    """Fetch slot data for a single date using a fresh session per call.
+
+    The embassy server invalidates its session after a handful of requests,
+    so each date must start with its own fresh session + CSRF token.
+    """
     date_str = appt_date.strftime("%d-%m-%Y")
     last_err = ""
     for attempt in range(3):
         try:
+            session, token = fresh_session_and_token()
             resp = session.post(
                 API_URL,
                 data={"appmnt_date": date_str, "_token": token},
@@ -85,13 +121,13 @@ def fetch_slot_data(session: requests.Session, token: str, appt_date: date) -> d
                 time.sleep(2 ** attempt)
                 continue
             if resp.status_code == 405:
-                # Server rejects the date (too far out or unavailable period)
+                # Date outside the bookable window — not an error, just no availability
                 return {
                     "date": appt_date,
                     "date_str": date_str,
                     "available_times": [],
                     "services": {},
-                    "error": None,  # not an error — just no availability
+                    "error": None,
                 }
             resp.raise_for_status()
             data = resp.json()
@@ -131,53 +167,26 @@ def main():
     print(f"Indian Embassy Netherlands — Appointment Slot Checker [{mode_label}]")
     print("=" * 60)
 
-    # Step 1: Get a session and CSRF token
-    print("\nFetching booking page to get session token...", end=" ", flush=True)
-    session = requests.Session()
-    session.headers.update({
-        "User-Agent": (
-            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-            "AppleWebKit/537.36 (KHTML, like Gecko) "
-            "Chrome/120.0.0.0 Safari/537.36"
-        ),
-        "Accept": "application/json, text/javascript, */*; q=0.01",
-        "X-Requested-With": "XMLHttpRequest",
-        "Referer": BOOKING_URL,
-    })
-
+    # Verify connectivity with a quick token fetch (startup check only)
+    print("\nVerifying connectivity to booking site...", end=" ", flush=True)
     try:
-        page = session.get(BOOKING_URL, timeout=15)
-        page.raise_for_status()
+        _, sample_token = fresh_session_and_token()
+        print(f"OK (token: {sample_token[:12]}...)")
     except Exception as e:
-        print(f"FAILED\nCould not load booking page: {e}")
+        print(f"FAILED\n{e}")
         sys.exit(1)
-
-    # Extract CSRF token from meta tag or hidden input
-    token_match = re.search(
-        r'<meta\s+name=["\']csrf-token["\']\s+content=["\']([^"\']+)["\']', page.text
-    ) or re.search(
-        r'<input[^>]+name=["\']_token["\'][^>]+value=["\']([^"\']+)["\']', page.text
-    ) or re.search(
-        r'"_token"\s*:\s*"([^"]+)"', page.text
-    )
-
-    if not token_match:
-        print("FAILED\nCould not find CSRF token in page. The site may have changed.")
-        sys.exit(1)
-
-    token = token_match.group(1)
-    print(f"OK (token: {token[:12]}...)")
 
     # Step 2: Get list of weekdays to check
     weekdays = get_weekdays(days_ahead=14) if quick else get_weekdays(months_ahead=2)
     print(f"Checking {len(weekdays)} weekdays from {weekdays[0]} to {weekdays[-1]}...")
+    print("(Each date uses a fresh session — server rate-limits shared sessions after ~4 requests)")
 
-    # Step 3: Fetch all dates in parallel
+    # Step 3: Fetch all dates in parallel — each worker self-creates its own session
     results = []
     errors = 0
-    with ThreadPoolExecutor(max_workers=3) as executor:
+    with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {
-            executor.submit(fetch_slot_data, session, token, d): d
+            executor.submit(fetch_slot_data, d): d
             for d in weekdays
         }
         done = 0
