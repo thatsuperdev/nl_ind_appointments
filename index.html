@@ -306,13 +306,31 @@ body {
   display: none;
   padding: .55rem .9rem .65rem;
   border-top: 1px solid var(--border);
-  font-size: .72rem;
-  color: var(--muted);
-  font-style: italic;
-  line-height: 1.5;
   background: var(--paper);
 }
 .date-card.open .card-body { display: block; }
+.time-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .22rem .28rem;
+}
+.time-chip {
+  font-size: .62rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: .1rem .35rem;
+  color: var(--text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.time-note {
+  font-size: .67rem;
+  color: var(--muted);
+  font-style: italic;
+  line-height: 1.4;
+  margin-top: .4rem;
+}
 
 /* Card footer — always visible */
 .card-footer {
@@ -442,8 +460,8 @@ body {
     </div>
   </div>
   <div class="footer-note">
-    Slot counts are sourced from the embassy booking API and may reflect configured capacity rather than real-time availability —
-    always confirm on the <a href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener">official booking site</a> before travelling.<br>
+    Time slots shown are open windows from the embassy booking API — actual bookability may vary.
+    Always confirm on the <a href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener">official booking site</a> before travelling.<br>
     Data refreshes every 10 minutes during embassy hours. Not affiliated with the Indian Embassy Netherlands.
   </div>
 </div>
@@ -552,7 +570,9 @@ function render() {
       </div>`;
     } else {
       const cards = svc.dates.map(d => {
-        const label = `${d.slots_available} slot${d.slots_available !== 1 ? 's' : ''}`;
+        const n = d.slots_available;
+        const label = `${n} time slot${n !== 1 ? 's' : ''}`;
+        const chips = (d.times || []).map(t => `<span class="time-chip">${t}</span>`).join('');
         return `<div class="date-card" onclick="toggleCard(this)">
           <div class="card-header">
             <div class="card-date-block">
@@ -565,7 +585,8 @@ function render() {
             </div>
           </div>
           <div class="card-body">
-            Slot count from the booking API — actual availability may differ. Always verify on the official booking site before travelling.
+            <div class="time-chips">${chips}</div>
+            <div class="time-note">Always verify on the official booking site before travelling.</div>
           </div>
           <div class="card-footer">
             <a class="book-btn" href="${data.booking_url}" target="_blank" rel="noopener"

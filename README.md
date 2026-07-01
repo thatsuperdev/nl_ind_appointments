@@ -17,7 +17,7 @@ GitHub Actions cron
   ├─ Quick scan (every 10 min, Mon–Sat 08:00–16:00 Amsterdam)
   │    Checks next 14 days · ~14 API calls · merges with existing data
   └─ Full scan (every 2 hours)
-       Checks full 2-month window · ~79 API calls · rebuilds completely
+       Checks current + next month · ~45 API calls · rebuilds completely
           ↓
        commits slots.json
           ↓

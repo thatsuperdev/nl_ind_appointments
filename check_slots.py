@@ -43,10 +43,11 @@ def parse_available_slots_v2(html: str) -> list[str]:
     return available
 
 
-def get_weekdays(months_ahead: int = 2, days_ahead: int | None = None) -> list[date]:
+def get_weekdays(months_ahead: int = 1, days_ahead: int | None = None) -> list[date]:
     """Return weekdays (Mon-Sat) from today.
 
     Pass days_ahead for a rolling window (quick mode), or months_ahead for the full range.
+    months_ahead=1 covers current month + next month (embassy's booking window).
     """
     today = date.today()
     if days_ahead is not None:
@@ -64,7 +65,7 @@ def get_weekdays(months_ahead: int = 2, days_ahead: int | None = None) -> list[d
     days = []
     current = today
     while current <= end_date:
-        if current.weekday() < 6:  # exclude Sunday
+        if current.weekday() < 5:  # Mon–Fri only
             days.append(current)
         current += timedelta(days=1)
     return days
@@ -163,7 +164,7 @@ def fetch_slot_data(appt_date: date) -> dict:
 
 def main():
     quick = "--quick" in sys.argv
-    mode_label = "QUICK (next 14 days)" if quick else "FULL (2 months)"
+    mode_label = "QUICK (next 14 days)" if quick else "FULL (current + next month)"
     print(f"Indian Embassy Netherlands — Appointment Slot Checker [{mode_label}]")
     print("=" * 60)
 
@@ -177,7 +178,7 @@ def main():
         sys.exit(1)
 
     # Step 2: Get list of weekdays to check
-    weekdays = get_weekdays(days_ahead=14) if quick else get_weekdays(months_ahead=2)
+    weekdays = get_weekdays(days_ahead=14) if quick else get_weekdays(months_ahead=1)
     print(f"Checking {len(weekdays)} weekdays from {weekdays[0]} to {weekdays[-1]}...")
     print("(Each date uses a fresh session — server rate-limits shared sessions after ~4 requests)")
 
@@ -261,22 +262,27 @@ def write_slots_json(results: list, all_services: set, path: str, merge: bool = 
     for svc_id in sorted(all_known, key=lambda x: int(x)):
         svc_name = SERVICE_NAMES.get(svc_id, f"Service {svc_id}")
 
-        # Start from existing dates outside the freshly-fetched window
+        # Start from existing dates outside the freshly-fetched window.
+        # Only keep entries that had actual open time slots (d["times"] non-empty) —
+        # this retroactively purges stale entries from before the availability gate fix.
         kept = []
         if merge:
             for d in existing.get("services", {}).get(svc_id, {}).get("dates", []):
-                if d["date"] not in fresh_dates:
+                if d["date"] not in fresh_dates and d.get("times"):
                     kept.append(d)
 
-        # Add fresh results for the window we just checked
+        # Add fresh results for the window we just checked.
+        # Gate on available_times (from timeslots_html) as ground truth —
+        # the services dict count reflects configured capacity, not real bookings.
+        # A date with count > 0 but 0 available time slots is fully booked.
         for r in results:
             svc_data = r["services"].get(svc_id, {})
             count = svc_data.get("available", 0)
-            if count > 0:
+            if count > 0 and r["available_times"]:
                 kept.append({
                     "date": r["date_str"],
                     "day": r["date"].strftime("%A"),
-                    "slots_available": count,
+                    "slots_available": len(r["available_times"]),
                     "times": r["available_times"],
                 })
 
