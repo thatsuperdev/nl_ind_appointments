@@ -106,6 +106,29 @@ body {
   letter-spacing: .03em;
   text-transform: uppercase;
 }
+.header-book {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .35rem;
+  flex-shrink: 0;
+  padding: .48rem .8rem;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: var(--radius-sm);
+  background: var(--avail);
+  color: var(--white);
+  text-decoration: none;
+  font-size: .78rem;
+  font-weight: 700;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,.18);
+}
+.header-book:hover { background: #15803D; }
+.header-book::after {
+  content: "\203A";
+  font-size: .95rem;
+  line-height: 1;
+}
 .live-dot {
   width: 7px; height: 7px;
   border-radius: 50%;
@@ -155,6 +178,11 @@ body {
   background: none;
   border: none;
   padding: 0;
+}
+.refresh-link[disabled] {
+  color: var(--muted);
+  cursor: wait;
+  text-decoration: none;
 }
 
 /* ── Service selector ────────────────────────────────────── */
@@ -236,12 +264,15 @@ body {
 .panel.active { display: block; }
 
 .date-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
   gap: .6rem;
 }
 
 .date-card {
+  flex: 1 1 calc((100% - 1.2rem) / 3);
+  max-width: calc((100% - 1.2rem) / 3);
   background: var(--white);
   border-radius: var(--radius);
   border: 1px solid var(--border);
@@ -249,21 +280,17 @@ body {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transition: box-shadow .15s;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
 }
-.date-card:hover { box-shadow: var(--shadow-md); }
+.date-card:hover {
+  border-color: #CFC6B7;
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
 
-/* Card header — always visible, click to expand */
 .card-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: .5rem;
-  padding: .8rem .9rem .65rem;
-  cursor: pointer;
-  user-select: none;
+  padding: .8rem .9rem .35rem;
 }
-.card-date-block { flex: 1; min-width: 0; }
 .card-date {
   font-family: 'Playfair Display', serif;
   font-size: .92rem;
@@ -271,18 +298,18 @@ body {
   color: var(--navy);
   line-height: 1.15;
 }
+.card-meta {
+  display: flex;
+  align-items: center;
+  gap: .45rem;
+  flex-wrap: wrap;
+  margin-top: .18rem;
+}
 .card-day {
   font-size: .65rem;
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: .07em;
-  margin-top: .1rem;
-}
-.card-header-right {
-  display: flex;
-  align-items: center;
-  gap: .35rem;
-  flex-shrink: 0;
 }
 .badge {
   font-size: .65rem;
@@ -293,28 +320,20 @@ body {
   padding: .18rem .5rem;
   white-space: nowrap;
 }
-.card-chevron {
-  font-size: .6rem;
-  color: var(--muted);
-  transition: transform .2s;
-  line-height: 1;
-}
-.date-card.open .card-chevron { transform: rotate(180deg); }
 
-/* Card body — expandable */
 .card-body {
-  display: none;
-  padding: .55rem .9rem .65rem;
-  border-top: 1px solid var(--border);
-  background: var(--paper);
+  padding: .4rem .9rem .85rem;
+  background: linear-gradient(180deg, var(--paper) 0%, #FBFAF6 100%);
+  flex: 1;
 }
-.date-card.open .card-body { display: block; }
 .time-chips {
   display: flex;
   flex-wrap: wrap;
   gap: .28rem .32rem;
 }
 .time-chip {
+  display: inline-flex;
+  align-items: center;
   font-size: .67rem;
   font-weight: 500;
   background: var(--gold-light);
@@ -326,28 +345,16 @@ body {
   font-variant-numeric: tabular-nums;
   letter-spacing: .01em;
 }
-
-/* Card footer — always visible */
-.card-footer {
-  margin-top: auto;
-  border-top: 1px solid var(--border);
-  padding: .55rem .9rem;
+.hidden-slot { display: none; }
+.date-card.slots-expanded .hidden-slot { display: inline-flex; }
+.more-chip {
+  cursor: pointer;
+  font-family: inherit;
+  color: var(--navy);
+  background: #EAF1FF;
+  border-color: #C9D8F2;
 }
-.book-btn {
-  display: block;
-  text-align: center;
-  padding: .4rem .75rem;
-  background: var(--navy);
-  color: var(--white);
-  border-radius: var(--radius-sm);
-  text-decoration: none;
-  font-size: .75rem;
-  font-weight: 600;
-  white-space: nowrap;
-  transition: background .15s;
-  letter-spacing: .01em;
-}
-.book-btn:hover { background: var(--navy-mid); }
+.more-chip:hover { background: #DEE9FC; }
 
 /* ── Empty state ─────────────────────────────────────────── */
 .empty-state {
@@ -395,24 +402,32 @@ body {
 
 /* ── Footer note ─────────────────────────────────────────── */
 .footer-note {
-  margin-top: 2rem;
-  padding-top: 1.25rem;
+  margin-top: 1.4rem;
+  padding-top: .85rem;
   border-top: 1px solid var(--border);
-  font-size: .73rem;
+  font-size: .72rem;
   color: var(--muted);
   text-align: center;
-  line-height: 1.7;
+  line-height: 1.45;
 }
 .footer-note a { color: var(--navy); }
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 560px) {
   .header-title { font-size: .95rem; }
-  .date-grid { grid-template-columns: repeat(2, 1fr); }
+  .header-inner { gap: .75rem; }
+  .header-book { padding: .42rem .58rem; font-size: .72rem; }
+  .date-card {
+    flex-basis: calc((100% - .6rem) / 2);
+    max-width: calc((100% - .6rem) / 2);
+  }
   .skeleton-wrap { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 380px) {
-  .date-grid { grid-template-columns: 1fr; }
+  .date-card {
+    flex-basis: 100%;
+    max-width: 100%;
+  }
   .skeleton-wrap { grid-template-columns: 1fr; }
 }
 
@@ -434,6 +449,8 @@ body {
       <div class="header-title">Indian Embassy Netherlands</div>
       <div class="header-sub"><span class="live-dot" id="live-dot"></span>Appointment Availability</div>
     </div>
+    <a class="header-book" href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener"
+       onclick="gtrack('book_click', { placement: 'header' })">Book appointment</a>
   </div>
 </header>
 
@@ -443,7 +460,7 @@ body {
 <div class="container">
   <div class="meta-bar">
     <span id="last-updated">Loading…</span>
-    <button class="refresh-link" onclick="gtrack('manual_refresh', {}); loadData()" id="refresh-btn" style="display:none">Refresh now</button>
+    <button class="refresh-link" onclick="loadData({ manual: true })" id="refresh-btn" style="display:none">Refresh now</button>
   </div>
   <div id="app">
     <div class="skeleton-wrap">
@@ -455,20 +472,20 @@ body {
     </div>
   </div>
   <div class="footer-note">
-    Time slots shown are open windows from the embassy booking API — actual bookability may vary.
-    Always confirm on the <a href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener">official booking site</a> before travelling.<br>
-    Data refreshes every 10 minutes during embassy hours. Not affiliated with the Indian Embassy Netherlands.
+    Slots are reported by the embassy booking API and refresh every 10 minutes.
+    Always confirm on the <a href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener">official booking site</a>.
   </div>
 </div>
 
 <script>
 const SLOTS_URL = './slots.json';
 const REFRESH_MS = 10 * 60 * 1000;
-const BOOKING_URL = 'https://appointment.indianembassynetherland.com/book_appointment';
 
 let data = null;
 let activeService = null;
 let refreshTimer = null;
+let metaTimer = null;
+let isLoading = false;
 
 function formatDate(ddmmyyyy) {
   const [d, mo, y] = ddmmyyyy.split('-');
@@ -481,6 +498,21 @@ function formatTime(raw) {
   return raw.replace(/\b(\d{2})(\d{2})\b/g, '$1:$2');
 }
 
+function renderTimeChips(times) {
+  const visibleLimit = 5;
+  const formatted = (times || []).map(formatTime);
+  const chips = formatted.map((time, index) =>
+    `<span class="time-chip ${index >= visibleLimit ? 'hidden-slot' : ''}">${time}</span>`
+  );
+  const hiddenCount = Math.max(0, formatted.length - visibleLimit);
+  if (hiddenCount > 0) {
+    chips.push(`<button type="button" class="time-chip more-chip"
+      data-more-label="+${hiddenCount} more"
+      data-less-label="Show fewer"
+      onclick="toggleTimeSlots(this)">+${hiddenCount} more</button>`);
+  }
+  return chips.join('');
+}
 
 function timeSince(isoStr) {
   const diff = Math.floor((Date.now() - new Date(isoStr)) / 60000);
@@ -499,8 +531,18 @@ function gtrack(event, params) {
   if (typeof gtag === 'function') gtag('event', event, params);
 }
 
-async function loadData() {
-  document.getElementById('refresh-btn').style.display = 'none';
+async function loadData(options = {}) {
+  if (isLoading) return;
+  isLoading = true;
+  const refreshBtn = document.getElementById('refresh-btn');
+  const previousText = refreshBtn.textContent;
+  refreshBtn.style.display = '';
+  refreshBtn.disabled = true;
+  refreshBtn.textContent = options.manual ? 'Checking…' : 'Loading…';
+  if (options.manual) {
+    gtrack('manual_refresh', {});
+    document.getElementById('last-updated').textContent = 'Checking latest data…';
+  }
   try {
     const res = await fetch(SLOTS_URL + '?t=' + Date.now());
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -513,6 +555,10 @@ async function loadData() {
       `<div class="alert">Could not load slot data: ${e.message}.<br>
        Make sure <code>slots.json</code> is deployed alongside this page.</div>`;
     document.getElementById('last-updated').textContent = 'Data unavailable';
+  } finally {
+    isLoading = false;
+    refreshBtn.disabled = false;
+    refreshBtn.textContent = previousText || 'Refresh now';
   }
 }
 
@@ -531,7 +577,9 @@ function updateMeta() {
 
 function render() {
   updateMeta();
-  setInterval(updateMeta, 30000); // keep "X mins ago" ticking
+  if (!metaTimer) {
+    metaTimer = setInterval(updateMeta, 30000); // keep "X mins ago" ticking
+  }
 
   const services = data.services;
   const ids = Object.keys(services);
@@ -571,24 +619,17 @@ function render() {
       const cards = svc.dates.map(d => {
         const n = d.slots_available;
         const label = `${n} time slot${n !== 1 ? 's' : ''}`;
-        const chips = (d.times || []).map(t => `<span class="time-chip">${formatTime(t)}</span>`).join('');
-        return `<div class="date-card" onclick="toggleCard(this)">
+        const chips = renderTimeChips(d.times);
+        return `<div class="date-card">
           <div class="card-header">
-            <div class="card-date-block">
-              <div class="card-date">${formatDate(d.date)}</div>
-              <div class="card-day">${d.day.slice(0,3)}</div>
-            </div>
-            <div class="card-header-right">
+            <div class="card-date">${formatDate(d.date)}</div>
+            <div class="card-meta">
+              <span class="card-day">${d.day.slice(0,3)}</span>
               <span class="badge">${label}</span>
-              <span class="card-chevron">▼</span>
             </div>
           </div>
           <div class="card-body">
             <div class="time-chips">${chips}</div>
-          </div>
-          <div class="card-footer">
-            <a class="book-btn" href="${data.booking_url}" target="_blank" rel="noopener"
-               onclick="event.stopPropagation(); gtrack('book_click', { service_id: '${id}', service_name: '${svc.name}', date: '${d.date}', slots_available: ${d.slots_available} })">Book →</a>
           </div>
         </div>`;
       }).join('');
@@ -605,8 +646,10 @@ function render() {
     `<div class="service-scroll"><div class="services">${pills}</div></div>${panels}`;
 }
 
-function toggleCard(card) {
-  card.classList.toggle('open');
+function toggleTimeSlots(button) {
+  const card = button.closest('.date-card');
+  const expanded = card.classList.toggle('slots-expanded');
+  button.textContent = expanded ? button.dataset.lessLabel : button.dataset.moreLabel;
 }
 
 function selectService(id) {
