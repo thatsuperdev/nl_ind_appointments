@@ -310,6 +310,12 @@ body {
   align-self: center;
   padding-left: .15rem;
 }
+.time-unknown {
+  font-size: .73rem;
+  color: var(--muted);
+  font-style: italic;
+}
+.time-unknown a { color: var(--navy); }
 
 .row-actions {
   display: flex;
@@ -476,6 +482,11 @@ function formatDate(ddmmyyyy) {
   return `${parseInt(d, 10)} ${months[parseInt(mo, 10) - 1]} ${y}`;
 }
 
+function fmtTime(t) {
+  // "0930 – 0938" → "09:30 – 09:38"
+  return t.replace(/\b(\d{2})(\d{2})\b/g, '$1:$2');
+}
+
 function railHtml(times) {
   const marks = times.map(t => {
     const mins = parseTimeMinutes(t);
@@ -485,17 +496,23 @@ function railHtml(times) {
   }).join('');
 
   const MAX_VISIBLE = 10;
-  const chips = times.slice(0, MAX_VISIBLE)
-    .map(t => `<span class="time-chip">${t}</span>`).join('');
-  const overflow = times.length > MAX_VISIBLE
-    ? `<span class="time-overflow">+${times.length - MAX_VISIBLE} more</span>` : '';
+  let chipsHtml;
+  if (times.length === 0) {
+    chipsHtml = `<span class="time-unknown">Exact times unavailable — check the <a href="${BOOKING_URL}" target="_blank" rel="noopener">booking site</a></span>`;
+  } else {
+    const chips = times.slice(0, MAX_VISIBLE)
+      .map(t => `<span class="time-chip">${fmtTime(t)}</span>`).join('');
+    const overflow = times.length > MAX_VISIBLE
+      ? `<span class="time-overflow">+${times.length - MAX_VISIBLE} more</span>` : '';
+    chipsHtml = chips + overflow;
+  }
 
   return `
     <div class="rail-wrap" aria-label="Time availability">${marks}</div>
     <div class="rail-labels">
       <span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span><span>14:00</span>
     </div>
-    <div class="time-chips">${chips}${overflow}</div>`;
+    <div class="time-chips">${chipsHtml}</div>`;
 }
 
 function timeSince(isoStr) {
