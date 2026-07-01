@@ -294,102 +294,140 @@ body {
   color: var(--muted);
 }
 
-/* ── Date cards ──────────────────────────────────────────── */
+/* ── Calendar ────────────────────────────────────────────── */
 .panel { display: none; }
 .panel.active { display: block; }
 
-.date-grid {
+.calendar-wrap {
   display: flex;
   flex-wrap: wrap;
+  gap: 1.75rem;
   align-items: flex-start;
-  gap: .6rem;
 }
-
-.date-card {
-  flex: 1 1 calc((100% - 1.2rem) / 3);
-  max-width: calc((100% - 1.2rem) / 3);
-  background: var(--white);
-  border-radius: var(--radius);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
+.calendar { flex: 1 1 280px; min-width: 260px; }
+.calendar-title {
+  font-family: 'Playfair Display', serif;
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: .6rem;
+}
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: .3rem;
+}
+.cal-dow {
+  font-size: .62rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--muted);
+  text-align: center;
+  padding-bottom: .2rem;
+}
+.cal-cell {
+  aspect-ratio: 1;
+  border-radius: 7px;
+  border: 1px solid transparent;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  transition: border-color .15s, box-shadow .15s, transform .15s;
+  align-items: center;
+  justify-content: center;
+  font-size: .78rem;
+  font-variant-numeric: tabular-nums;
+  transition: transform .12s, box-shadow .12s, background .12s;
 }
-.date-card:hover {
-  border-color: #CFC6B7;
-  box-shadow: var(--shadow-md);
+.cal-cell.empty { visibility: hidden; }
+.cal-cell.cal-weekend,
+.cal-cell.cal-past {
+  color: #C4BDAE;
+  background: transparent;
+}
+.cal-cell.cal-full {
+  background: var(--danger-bg);
+  color: var(--danger);
+  border-color: #F5CACA;
+}
+.cal-cell.cal-available {
+  background: var(--avail-bg);
+  color: var(--avail);
+  border-color: #B9E6C4;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cal-cell.cal-available:hover {
+  box-shadow: var(--shadow-sm);
   transform: translateY(-1px);
 }
-
-.card-header {
-  padding: .8rem .9rem .35rem;
+.cal-cell.cal-available.selected {
+  background: var(--navy);
+  color: var(--white);
+  border-color: var(--navy);
+  box-shadow: var(--shadow-md);
 }
-.card-date {
+.cal-count {
+  font-size: .58rem;
+  font-weight: 700;
+  margin-top: 1px;
+  opacity: .85;
+}
+
+.cal-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  margin-top: 1.1rem;
+  font-size: .72rem;
+  color: var(--muted);
+}
+.legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+  margin-right: .35rem;
+  vertical-align: -1px;
+}
+
+.cal-detail {
+  margin-top: 1.25rem;
+  padding: 1rem 1.15rem;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+.cal-detail-title {
   font-family: 'Playfair Display', serif;
   font-size: .92rem;
   font-weight: 700;
   color: var(--navy);
-  line-height: 1.15;
+  margin-bottom: .6rem;
 }
-.card-meta {
-  display: flex;
-  align-items: center;
-  gap: .45rem;
-  flex-wrap: wrap;
-  margin-top: .18rem;
-}
-.card-day {
-  font-size: .65rem;
+.cal-detail-empty {
+  font-size: .82rem;
   color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: .07em;
-}
-.badge {
-  font-size: .65rem;
-  font-weight: 700;
-  background: var(--avail-bg);
-  color: var(--avail);
-  border-radius: 999px;
-  padding: .18rem .5rem;
-  white-space: nowrap;
-}
-
-.card-body {
-  padding: .4rem .9rem .85rem;
-  background: linear-gradient(180deg, var(--paper) 0%, #FBFAF6 100%);
-  flex: 1;
 }
 .time-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: .28rem .32rem;
+  gap: .32rem .38rem;
 }
 .time-chip {
   display: inline-flex;
   align-items: center;
-  font-size: .67rem;
+  font-size: .72rem;
   font-weight: 500;
   background: var(--gold-light);
   border: 1px solid #e8d49a;
   border-radius: 5px;
-  padding: .18rem .46rem;
+  padding: .22rem .5rem;
   color: #6b4c00;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
   letter-spacing: .01em;
 }
-.hidden-slot { display: none; }
-.date-card.slots-expanded .hidden-slot { display: inline-flex; }
-.more-chip {
-  cursor: pointer;
-  font-family: inherit;
-  color: var(--navy);
-  background: #EAF1FF;
-  border-color: #C9D8F2;
-}
-.more-chip:hover { background: #DEE9FC; }
 
 /* ── Empty state ─────────────────────────────────────────── */
 .empty-state {
@@ -452,17 +490,11 @@ body {
   .header-title { font-size: .95rem; }
   .header-inner { gap: .75rem; }
   .header-book { padding: .42rem .58rem; font-size: .72rem; }
-  .date-card {
-    flex-basis: calc((100% - .6rem) / 2);
-    max-width: calc((100% - .6rem) / 2);
-  }
+  .calendar-wrap { gap: 1.5rem; }
+  .cal-cell { font-size: .72rem; }
   .skeleton-wrap { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 380px) {
-  .date-card {
-    flex-basis: 100%;
-    max-width: 100%;
-  }
   .skeleton-wrap { grid-template-columns: 1fr; }
 }
 
@@ -533,20 +565,49 @@ function formatTime(raw) {
   return raw.replace(/\b(\d{2})(\d{2})\b/g, '$1:$2');
 }
 
-function renderTimeChips(times) {
-  const visibleLimit = 5;
-  const formatted = (times || []).map(formatTime);
-  const chips = formatted.map((time, index) =>
-    `<span class="time-chip ${index >= visibleLimit ? 'hidden-slot' : ''}">${time}</span>`
-  );
-  const hiddenCount = Math.max(0, formatted.length - visibleLimit);
-  if (hiddenCount > 0) {
-    chips.push(`<button type="button" class="time-chip more-chip"
-      data-more-label="+${hiddenCount} more"
-      data-less-label="Show fewer"
-      onclick="toggleTimeSlots(this)">+${hiddenCount} more</button>`);
+function pad2(n) { return String(n).padStart(2, '0'); }
+
+function toDateStr(year, month, day) {
+  // month is 0-indexed → dd-mm-yyyy (matches slots.json)
+  return `${pad2(day)}-${pad2(month + 1)}-${year}`;
+}
+
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW_LABELS = ['S','M','T','W','T','F','S'];
+
+function renderCalendarMonth(year, month, dateMap, todayMidnight) {
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startDow = new Date(year, month, 1).getDay();
+  let cells = '';
+  for (let i = 0; i < startDow; i++) cells += `<div class="cal-cell empty"></div>`;
+  for (let day = 1; day <= daysInMonth; day++) {
+    const dow = new Date(year, month, day).getDay();
+    const isWeekend = dow === 0 || dow === 6;
+    const isPast = new Date(year, month, day) < todayMidnight;
+    const dateStr = toDateStr(year, month, day);
+    const info = dateMap[dateStr];
+
+    let cls = 'cal-cell';
+    let inner = `<span class="cal-daynum">${day}</span>`;
+    let onclick = '';
+    if (isWeekend || isPast) {
+      cls += isWeekend ? ' cal-weekend' : ' cal-past';
+    } else if (info) {
+      cls += ' cal-available';
+      inner += `<span class="cal-count">${info.count}</span>`;
+      onclick = ` onclick="selectDate('${dateStr}')"`;
+    } else {
+      cls += ' cal-full';
+    }
+    cells += `<div class="${cls}" data-date="${dateStr}"${onclick}>${inner}</div>`;
   }
-  return chips.join('');
+  return `<div class="calendar" data-month="${year}-${pad2(month + 1)}">
+    <div class="calendar-title">${MONTH_NAMES[month]} ${year}</div>
+    <div class="cal-grid">
+      ${DOW_LABELS.map(l => `<div class="cal-dow">${l}</div>`).join('')}
+      ${cells}
+    </div>
+  </div>`;
 }
 
 function timeSince(isoStr) {
@@ -651,28 +712,30 @@ function render() {
         <div class="empty-sub">Check back soon — slots are released periodically.</div>
       </div>`;
     } else {
-      const cards = svc.dates.map(d => {
-        const n = d.slots_available;
-        const label = `${n} time slot${n !== 1 ? 's' : ''}`;
-        const chips = renderTimeChips(d.times);
-        return `<div class="date-card">
-          <div class="card-header">
-            <div class="card-date">${formatDate(d.date)}</div>
-            <div class="card-meta">
-              <span class="card-day">${d.day.slice(0,3)}</span>
-              <span class="badge">${label}</span>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="time-chips">${chips}</div>
-          </div>
-        </div>`;
-      }).join('');
+      const dateMap = {};
+      svc.dates.forEach(d => { dateMap[d.date] = { count: d.slots_available, times: d.times }; });
+
+      const now = new Date();
+      const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const months = [
+        [now.getFullYear(), now.getMonth()],
+        now.getMonth() === 11 ? [now.getFullYear() + 1, 0] : [now.getFullYear(), now.getMonth() + 1],
+      ];
+      const calendars = months.map(([y, m]) => renderCalendarMonth(y, m, dateMap, todayMidnight)).join('');
+
       body = `<div class="section-head">
         <span class="section-label">${svc.name}</span>
         <span class="section-count">${svc.dates.length} date${svc.dates.length !== 1 ? 's' : ''} with reported availability</span>
       </div>
-      <div class="date-grid">${cards}</div>`;
+      <div class="calendar-wrap">${calendars}</div>
+      <div class="cal-legend">
+        <span><span class="legend-dot" style="background:var(--avail-bg);border:1px solid #B9E6C4"></span>Open — tap for times</span>
+        <span><span class="legend-dot" style="background:var(--danger-bg);border:1px solid #F5CACA"></span>Fully booked</span>
+        <span><span class="legend-dot" style="background:var(--paper-dark)"></span>Weekend / closed</span>
+      </div>
+      <div class="cal-detail" id="cal-detail-${id}">
+        <div class="cal-detail-empty">Tap a highlighted date above to see its available time slots.</div>
+      </div>`;
     }
     return `<div class="panel ${isActive ? 'active' : ''}" id="panel-${id}">${body}</div>`;
   }).join('');
@@ -681,10 +744,21 @@ function render() {
     `<div class="service-scroll"><div class="services">${pills}</div></div>${panels}`;
 }
 
-function toggleTimeSlots(button) {
-  const card = button.closest('.date-card');
-  const expanded = card.classList.toggle('slots-expanded');
-  button.textContent = expanded ? button.dataset.lessLabel : button.dataset.moreLabel;
+function selectDate(dateStr) {
+  const svc = data.services[activeService];
+  const d = svc.dates.find(x => x.date === dateStr);
+  if (!d) return;
+
+  const panel = document.getElementById('panel-' + activeService);
+  panel.querySelectorAll('.cal-cell.selected').forEach(el => el.classList.remove('selected'));
+  panel.querySelectorAll(`.cal-cell[data-date="${dateStr}"]`).forEach(el => el.classList.add('selected'));
+
+  const chips = (d.times || []).map(t => `<span class="time-chip">${formatTime(t)}</span>`).join('');
+  document.getElementById('cal-detail-' + activeService).innerHTML = `
+    <div class="cal-detail-title">${formatDate(d.date)} · ${d.day}</div>
+    <div class="time-chips">${chips}</div>
+  `;
+  gtrack('select_date', { service_id: activeService, date: dateStr });
 }
 
 function selectService(id) {
