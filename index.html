@@ -312,24 +312,19 @@ body {
 .time-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: .22rem .28rem;
+  gap: .28rem .32rem;
 }
 .time-chip {
-  font-size: .62rem;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: .1rem .35rem;
-  color: var(--text);
+  font-size: .67rem;
+  font-weight: 500;
+  background: var(--gold-light);
+  border: 1px solid #e8d49a;
+  border-radius: 5px;
+  padding: .18rem .46rem;
+  color: #6b4c00;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
-}
-.time-note {
-  font-size: .67rem;
-  color: var(--muted);
-  font-style: italic;
-  line-height: 1.4;
-  margin-top: .4rem;
+  letter-spacing: .01em;
 }
 
 /* Card footer — always visible */
@@ -476,10 +471,14 @@ let activeService = null;
 let refreshTimer = null;
 
 function formatDate(ddmmyyyy) {
-  // "07-07-2026" → "7 Jul 2026"
   const [d, mo, y] = ddmmyyyy.split('-');
   const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return `${parseInt(d, 10)} ${months[parseInt(mo, 10) - 1]} ${y}`;
+}
+
+function formatTime(raw) {
+  // "1018 – 1026" → "10:18 – 10:26"
+  return raw.replace(/\b(\d{2})(\d{2})\b/g, '$1:$2');
 }
 
 
@@ -572,7 +571,7 @@ function render() {
       const cards = svc.dates.map(d => {
         const n = d.slots_available;
         const label = `${n} time slot${n !== 1 ? 's' : ''}`;
-        const chips = (d.times || []).map(t => `<span class="time-chip">${t}</span>`).join('');
+        const chips = (d.times || []).map(t => `<span class="time-chip">${formatTime(t)}</span>`).join('');
         return `<div class="date-card" onclick="toggleCard(this)">
           <div class="card-header">
             <div class="card-date-block">
@@ -586,7 +585,6 @@ function render() {
           </div>
           <div class="card-body">
             <div class="time-chips">${chips}</div>
-            <div class="time-note">Always verify on the official booking site before travelling.</div>
           </div>
           <div class="card-footer">
             <a class="book-btn" href="${data.booking_url}" target="_blank" rel="noopener"
