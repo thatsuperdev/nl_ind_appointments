@@ -14,8 +14,8 @@ from datetime import date, datetime, timedelta, timezone
 
 import requests
 
-BOOKING_URL = "https://appointment.indianembassynetherlands.com/book_appointment"
-API_URL = "https://appointment.indianembassynetherlands.com/getBookingData"
+BOOKING_URL = "https://appointment.indianembassynetherland.com/book_appointment"
+API_URL = "https://appointment.indianembassynetherland.com/getBookingData"
 
 SERVICE_NAMES = {
     "1": "Passport Services",
