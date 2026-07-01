@@ -12,7 +12,7 @@ A public appointment slot checker for the Indian Embassy Netherlands booking sit
 
 ```
 Python scraper (check_slots.py)
-  → GitHub Actions cron (quick: */10 min Mon–Sat, full: every 2h)
+  → GitHub Actions cron (full-window: */10 min during embassy hours, fallback full every 2h)
   → commits slots.json to repo
   → Netlify auto-deploys (~30s)
   → index.html fetches slots.json every 10 min
@@ -30,8 +30,8 @@ No backend. No database. Pure static.
 | `slots.json` | Generated data file — committed by CI, served by Netlify |
 | `check_slots.py` | Scraper — fetches CSRF token, calls API in parallel, writes `slots.json` |
 | `netlify.toml` | `Cache-Control: no-cache` on `slots.json` so it's never served stale |
-| `.github/workflows/update-slots-quick.yml` | 10-min cron, next 14 days, merges into existing data |
-| `.github/workflows/update-slots-full.yml` | 2-hour cron, current + next month, rebuilds from scratch |
+| `.github/workflows/update-slots-quick.yml` | 10-min cron, current + next month, rebuilds from scratch |
+| `.github/workflows/update-slots-full.yml` | 2-hour fallback cron, current + next month, rebuilds from scratch |
 | `requirements.txt` | Just `requests` |
 
 ---
@@ -45,15 +45,16 @@ No backend. No database. Pure static.
 ### Session rate limiting (the core gotcha)
 The embassy server invalidates its session after ~4 POST requests. If you reuse a session across multiple dates, only the first 3–4 return real data; all others return HTTP 405. **Every date must use a fresh session + fresh CSRF token.**
 
-### Two different availability signals
-The API response has two fields. They mean different things:
+### Availability signals
+The booking form/API expose three signals. They mean different things:
 
 | Field | What it is | Reliable? |
 |-------|-----------|-----------|
-| `services` dict | Configured capacity quota per service (e.g., `"Passport Services (12 available)"`) | **NO** — shows quota even when all slots are booked |
-| `timeslots_html` | HTML list of 30 time windows with `disabled="true"` on booked ones | **YES** — ground truth |
+| booking form `no_dates` | Dates the embassy datepicker marks red/unselectable | **YES — hard gate** |
+| `services` dict | Current service-specific availability count (e.g., `"OCI Services (6 available)"`) | **YES for count** |
+| `timeslots_html` | Shared date-level time windows with `disabled="true"` on booked windows | **YES for open windows, not per-service count** |
 
-**Decision:** `slots_available` in `slots.json` stores `len(available_times)` (parsed from `timeslots_html`), NOT the services dict count. A date is only included if it has at least 1 non-disabled time window.
+**Decision:** first exclude all booking form `no_dates`. Then `slots_available` in `slots.json` stores the service-specific `services` count. `times` stores the shared open time-window list from `timeslots_html`. A date is only included if it is not blocked, the service count is > 0, and the date has at least 1 open time window.
 
 ### Booking window
 The embassy only opens slots for the current calendar month + next calendar month. September and beyond may return HTTP 200 with slots but those are unreleased placeholder data. Scraper is capped at `months_ahead=1` (= end of next calendar month).
@@ -77,20 +78,20 @@ def fetch_slot_data(appt_date: date) -> dict:
 ```
 4 workers run in parallel. Each creates its own independent session. This is critical — sharing sessions causes silent failures.
 
+### Datepicker blocklist
+`fetch_blocked_dates()` follows the same instruction-accept flow as the browser, loads the booking form, and parses `var no_dates = [...]`. These dates are excluded before calling/writing API data. Direct `getBookingData` can still return stale-looking data for dates the actual calendar blocks (e.g. July 03 and OCI Aug 24 on 2026-07-01), so the blocklist must be treated as authoritative.
+
 ### Availability gate (both paths)
 ```python
 # Fresh data path (write_slots_json):
 if count > 0 and r["available_times"]:   # <-- both conditions required
-    kept.append({"slots_available": len(r["available_times"]), ...})
-
-# Merge path (quick mode keeps old data for dates outside window):
-if d["date"] not in fresh_dates and d.get("times"):  # <-- drop stale entries with no times
-    kept.append(d)
+    kept.append({"slots_available": count, "times": r["available_times"], ...})
 ```
 
 ### Quick vs full mode
-- `--quick`: scans next 14 days, merges with existing slots.json (preserves future dates)
-- default: scans current + next month, rebuilds from scratch (no merge)
+- Frequent workflow runs default full mode every 10 minutes during embassy hours.
+- Default full mode scans current + next month and rebuilds from scratch (no merge).
+- `--quick` still exists for manual local checks, but should not drive production data because merge-preserved future dates can go stale.
 
 ---
 
@@ -105,10 +106,10 @@ function formatTime(raw) {
 ```
 
 ### Card UI
-- Grid: `repeat(auto-fill, minmax(190px, 1fr))` — 3 cols desktop, 2 mobile, 1 narrow
-- Cards are accordion: click header → expand body with time chips
-- Body shows time chips (warm gold styling) — no per-card disclaimer
-- Book button in footer always visible, links to `data.booking_url` = `/book_appointment`
+- Grid: 3 cols desktop, 2 mobile, 1 narrow
+- Cards are static; no per-card booking CTA
+- Header has one global `Book appointment` CTA
+- Body shows max 5 time-window chips plus `+N more` expand control
 
 ### Data contract (slots.json shape)
 ```json
@@ -137,11 +138,9 @@ Note: `times` in slots.json are stored raw (`"1018 – 1026"`), formatted only i
 
 ## Known limitations
 
-1. **`slots_available` is time-window count, not per-service count.** All services on the same day share the same 30 time windows. If a day has 18 open windows, every service on that day shows "18 time slots." There's no API way to get per-service time slot breakdown.
+1. **`times` is a shared date-level window list, not per-service assignment.** `slots_available` is service-specific count; the exact per-service time-window allocation is not exposed by the API.
 
-2. **The `services` dict quota numbers are ignored** (they reflect configured capacity, not real bookings). Only `timeslots_html` is used.
-
-3. **Slot count drops to near-zero once near-term dates fill up.** July weekdays are mostly booked. August starts opening mid-month. This is expected behavior.
+2. **Slot count drops to near-zero once near-term dates fill up.** July weekdays are mostly booked. August starts opening mid-month. This is expected behavior.
 
 ---
 
@@ -150,7 +149,7 @@ Note: `times` in slots.json are stored raw (`"1018 – 1026"`), formatted only i
 - **Don't reuse sessions across dates.** Will silently break things.
 - **Don't go beyond months_ahead=1.** Embassy calendar doesn't reliably serve beyond next month.
 - **Don't show Saturdays/Sundays.** Embassy closed.
-- **Don't trust `services` dict counts as real-time availability.** They're misleading.
+- **Don't use `timeslots_html` length as a per-service slot count.** It is a shared date-level window list.
 - **CI write permissions must be enabled** in GitHub Actions settings (`Settings → Actions → General → Workflow permissions → Read and write`).
 
 ---

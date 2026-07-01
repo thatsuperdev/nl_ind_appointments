@@ -16,6 +16,7 @@ import requests
 
 BOOKING_URL = "https://appointment.indianembassynetherland.com/book_appointment"
 API_URL = "https://appointment.indianembassynetherland.com/getBookingData"
+SUBMIT_INSTRUCTION_URL = "https://appointment.indianembassynetherland.com/submitInstruction"
 
 SERVICE_NAMES = {
     "1": "Passport Services",
@@ -71,6 +72,13 @@ def get_weekdays(months_ahead: int = 1, days_ahead: int | None = None) -> list[d
     return days
 
 
+def ddmmyyyy_to_iso(value: str) -> str:
+    try:
+        return datetime.strptime(value, "%d-%m-%Y").date().isoformat()
+    except ValueError:
+        return ""
+
+
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -89,17 +97,58 @@ TOKEN_PATTERNS = [
 ]
 
 
-def fresh_session_and_token() -> tuple[requests.Session, str]:
-    """Create a new session, fetch the booking page, and extract a fresh CSRF token."""
-    session = requests.Session()
-    session.headers.update(HEADERS)
+def extract_csrf_token(html: str) -> str:
+    for pat in TOKEN_PATTERNS:
+        m = re.search(pat, html)
+        if m:
+            return m.group(1)
+    raise RuntimeError("Could not extract CSRF token")
+
+
+def extract_js_string_array(html: str, name: str) -> set[str]:
+    match = re.search(rf"\bvar\s+{re.escape(name)}\s*=\s*(\[[^;]*\]);", html, re.S)
+    if not match:
+        raise RuntimeError(f"Could not extract {name} from booking form")
+    return set(re.findall(r'"([^"]+)"', match.group(1)))
+
+
+def booking_form_html(session: requests.Session) -> str:
+    """Return the actual appointment form HTML, accepting instructions if needed."""
     page = session.get(BOOKING_URL, timeout=15)
     page.raise_for_status()
-    for pat in TOKEN_PATTERNS:
-        m = re.search(pat, page.text)
-        if m:
-            return session, m.group(1)
-    raise RuntimeError("Could not extract CSRF token from booking page")
+    if 'id="Appointment"' in page.text and "getBookingData" in page.text:
+        return page.text
+
+    token = extract_csrf_token(page.text)
+    agree_match = re.search(r'<input[^>]+name=["\']agree["\'][^>]+value=["\']([^"\']+)', page.text, re.S)
+    if not agree_match:
+        raise RuntimeError("Could not extract instruction agreement value")
+
+    form = session.post(
+        SUBMIT_INSTRUCTION_URL,
+        data={"_token": token, "agree": agree_match.group(1)},
+        timeout=15,
+    )
+    form.raise_for_status()
+    if 'id="Appointment"' not in form.text:
+        raise RuntimeError("Instruction submit did not return booking form")
+    return form.text
+
+
+def fresh_session_and_token() -> tuple[requests.Session, str]:
+    """Create a new session, load the booking form, and extract a fresh CSRF token."""
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    form_html = booking_form_html(session)
+    return session, extract_csrf_token(form_html)
+
+
+def fetch_blocked_dates() -> set[str]:
+    """Return yyyy-mm-dd dates blocked by the embassy datepicker."""
+    session = requests.Session()
+    session.headers.update(HEADERS)
+    form_html = booking_form_html(session)
+    return extract_js_string_array(form_html, "no_dates")
 
 
 def fetch_slot_data(appt_date: date) -> dict:
@@ -168,18 +217,26 @@ def main():
     print(f"Indian Embassy Netherlands — Appointment Slot Checker [{mode_label}]")
     print("=" * 60)
 
-    # Verify connectivity with a quick token fetch (startup check only)
+    # Verify connectivity and mirror the booking form's blocked-date calendar.
     print("\nVerifying connectivity to booking site...", end=" ", flush=True)
     try:
+        blocked_dates = fetch_blocked_dates()
         _, sample_token = fresh_session_and_token()
-        print(f"OK (token: {sample_token[:12]}...)")
+        print(f"OK (token: {sample_token[:12]}..., blocked dates: {len(blocked_dates)})")
     except Exception as e:
         print(f"FAILED\n{e}")
         sys.exit(1)
 
     # Step 2: Get list of weekdays to check
-    weekdays = get_weekdays(days_ahead=14) if quick else get_weekdays(months_ahead=1)
+    all_weekdays = get_weekdays(days_ahead=14) if quick else get_weekdays(months_ahead=1)
+    weekdays = [d for d in all_weekdays if d.isoformat() not in blocked_dates]
+    skipped = len(all_weekdays) - len(weekdays)
+    if not weekdays:
+        print("All dates in the scan window are blocked by the embassy datepicker.")
+        sys.exit(1)
     print(f"Checking {len(weekdays)} weekdays from {weekdays[0]} to {weekdays[-1]}...")
+    if skipped:
+        print(f"Skipping {skipped} blocked dates from embassy datepicker.")
     print("(Each date uses a fresh session — server rate-limits shared sessions after ~4 requests)")
 
     # Step 3: Fetch all dates in parallel — each worker self-creates its own session
@@ -238,11 +295,18 @@ def main():
 
     # Step 7: Write slots.json for the hosted page
     json_path = "slots.json"
-    write_slots_json(results, all_services, json_path, merge=quick)
+    write_slots_json(results, all_services, json_path, merge=quick, blocked_dates=blocked_dates)
     print(f"\n\nData saved to: {json_path}")
 
 
-def write_slots_json(results: list, all_services: set, path: str, merge: bool = False):
+def write_slots_json(
+    results: list,
+    all_services: set,
+    path: str,
+    merge: bool = False,
+    blocked_dates: set[str] | None = None,
+):
+    blocked_dates = blocked_dates or set()
     # In merge mode, load existing data so full-range dates are preserved
     existing = {}
     if merge:
@@ -268,13 +332,13 @@ def write_slots_json(results: list, all_services: set, path: str, merge: bool = 
         kept = []
         if merge:
             for d in existing.get("services", {}).get(svc_id, {}).get("dates", []):
-                if d["date"] not in fresh_dates and d.get("times"):
+                date_key = ddmmyyyy_to_iso(d.get("date", ""))
+                if d["date"] not in fresh_dates and date_key not in blocked_dates and d.get("times"):
                     kept.append(d)
 
         # Add fresh results for the window we just checked.
-        # Gate on available_times (from timeslots_html) as ground truth —
-        # the services dict count reflects configured capacity, not real bookings.
-        # A date with count > 0 but 0 available time slots is fully booked.
+        # Keep the service-specific count as slots_available. timeslots_html is
+        # the shared appointment-window list for the date, not a per-service count.
         for r in results:
             svc_data = r["services"].get(svc_id, {})
             count = svc_data.get("available", 0)
@@ -282,7 +346,7 @@ def write_slots_json(results: list, all_services: set, path: str, merge: bool = 
                 kept.append({
                     "date": r["date_str"],
                     "day": r["date"].strftime("%A"),
-                    "slots_available": len(r["available_times"]),
+                    "slots_available": count,
                     "times": r["available_times"],
                 })
 

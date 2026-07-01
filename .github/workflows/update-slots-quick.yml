@@ -1,7 +1,8 @@
-name: Update Slots — Quick
+name: Update Slots — Frequent
 
-# Runs every 10 min during embassy hours to keep near-term dates fresh.
-# Only checks the next 14 days (~14 API calls). Merges with full-range data.
+# Runs every 10 min during embassy hours and checks the full current+next-month
+# booking window. This avoids stale future dates surviving from a merge-only
+# quick scan.
 
 on:
   schedule:
@@ -10,6 +11,10 @@ on:
 
 permissions:
   contents: write
+
+concurrency:
+  group: slots-update
+  cancel-in-progress: false
 
 jobs:
   update:
@@ -25,8 +30,11 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Fetch slot data (quick)
-        run: python check_slots.py --quick
+      - name: Sync latest data
+        run: git pull --rebase origin main
+
+      - name: Fetch slot data (full window)
+        run: python check_slots.py
 
       - name: Commit if changed
         run: |
@@ -36,7 +44,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes."
           else
-            git commit -m "chore: update slots.json (quick) [skip ci]"
+            git commit -m "chore: update slots.json (frequent) [skip ci]"
             git pull --rebase origin main
             git push
           fi
