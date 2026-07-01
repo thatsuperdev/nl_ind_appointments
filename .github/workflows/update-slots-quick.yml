@@ -1,12 +1,16 @@
 name: Update Slots — Frequent
 
-# Runs every 10 min during embassy hours and checks the full current+next-month
-# booking window. This avoids stale future dates surviving from a merge-only
-# quick scan.
+# Covers all release paths:
+# - cancellations: regular full-window checks 24/7
+# - weekly release: denser checks around Thu 09:00 Amsterdam
+# - monthly release: denser checks around the 1st 09:00 Amsterdam
+# GitHub cron is UTC; 07:00-08:59 UTC covers 09:00 local in both CEST/CET.
 
 on:
   schedule:
-    - cron: '*/10 6-14 * * 1-6'   # Mon–Sat, 08:00–16:00 Amsterdam (06:00–14:00 UTC)
+    - cron: '*/15 * * * *'        # Cancellation watch: 24/7
+    - cron: '*/5 7-8 * * 4'       # Weekly Thu 09:00 Amsterdam release window
+    - cron: '*/5 7-8 1 * *'       # Monthly 1st 09:00 Amsterdam release window
   workflow_dispatch:
 
 permissions:

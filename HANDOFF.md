@@ -12,7 +12,7 @@ A public appointment slot checker for the Indian Embassy Netherlands booking sit
 
 ```
 Python scraper (check_slots.py)
-  → GitHub Actions cron (full-window: */10 min during embassy hours, fallback full every 2h)
+  → GitHub Actions cron (cancellation watch + Thu/monthly release bursts + 2h fallback)
   → commits slots.json to repo
   → Netlify auto-deploys (~30s)
   → index.html fetches slots.json every 10 min
@@ -30,7 +30,7 @@ No backend. No database. Pure static.
 | `slots.json` | Generated data file — committed by CI, served by Netlify |
 | `check_slots.py` | Scraper — fetches CSRF token, calls API in parallel, writes `slots.json` |
 | `netlify.toml` | `Cache-Control: no-cache` on `slots.json` so it's never served stale |
-| `.github/workflows/update-slots-quick.yml` | 10-min cron, current + next month, rebuilds from scratch |
+| `.github/workflows/update-slots-quick.yml` | Frequent full-window cron for cancellations + Thu/monthly release bursts |
 | `.github/workflows/update-slots-full.yml` | 2-hour fallback cron, current + next month, rebuilds from scratch |
 | `requirements.txt` | Just `requests` |
 
@@ -89,7 +89,10 @@ if count > 0 and r["available_times"]:   # <-- both conditions required
 ```
 
 ### Quick vs full mode
-- Frequent workflow runs default full mode every 10 minutes during embassy hours.
+- Frequent workflow runs default full mode for cancellation monitoring and release windows.
+- Cancellation watch: every 15 minutes, 24/7, because users can cancel appointments anytime.
+- Weekly release burst: every 5 minutes around Thursday 09:00 Amsterdam.
+- Monthly release burst: every 5 minutes around the 1st 09:00 Amsterdam, including weekends.
 - Default full mode scans current + next month and rebuilds from scratch (no merge).
 - `--quick` still exists for manual local checks, but should not drive production data because merge-preserved future dates can go stale.
 
@@ -104,6 +107,9 @@ function formatTime(raw) {
   return raw.replace(/\b(\d{2})(\d{2})\b/g, '$1:$2');
 }
 ```
+
+### Freshness display
+The header meta says `Checked X ago`, not `Updated X ago`, because GitHub Actions regenerates `slots.json` on each successful check even when slot availability is unchanged.
 
 ### Card UI
 - Grid: 3 cols desktop, 2 mobile, 1 narrow

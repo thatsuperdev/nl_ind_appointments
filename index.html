@@ -568,8 +568,8 @@ function updateMeta() {
   const stale = isStale(data.generated_at);
   const el = document.getElementById('last-updated');
   el.innerHTML = stale
-    ? `<span class="meta-stale">⚠ Data may be stale — last updated ${ago}</span>`
-    : `Updated ${ago}`;
+    ? `<span class="meta-stale">⚠ Data may be stale — last checked ${ago}</span>`
+    : `Checked ${ago}`;
   document.getElementById('live-dot').style.background = stale ? '#F59E0B' : '#16A34A';
   document.getElementById('refresh-btn').style.display = '';
   if (stale) gtrack('data_stale', { minutes_old: Math.floor((Date.now() - new Date(data.generated_at)) / 60000) });
