@@ -166,7 +166,7 @@ def main():
     # Step 3: Fetch all dates in parallel
     results = []
     errors = 0
-    with ThreadPoolExecutor(max_workers=8) as executor:
+    with ThreadPoolExecutor(max_workers=3) as executor:
         futures = {
             executor.submit(fetch_slot_data, session, token, d): d
             for d in weekdays

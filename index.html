@@ -258,6 +258,11 @@ body {
   gap: 1rem;
   padding: .85rem 1rem .85rem 1.1rem;
 }
+.row-middle {
+  font-size: .76rem;
+  color: var(--muted);
+  font-style: italic;
+}
 
 .row-date-block { flex-shrink: 0; }
 .row-date {
@@ -277,66 +282,8 @@ body {
 
 .row-middle { min-width: 0; }
 
-/* Time rail — visual density indicator */
-.rail-wrap {
-  position: relative;
-  height: 14px;
-  background: var(--rail-bg);
-  border-radius: 3px;
-  overflow: hidden;
-  margin-bottom: .3rem;
-}
-.rail-mark {
-  position: absolute;
-  top: 0;
-  height: 100%;
-  width: 3.2%;
-  min-width: 5px;
-  background: var(--avail);
-  border-radius: 2px;
-}
-.rail-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: .58rem;
-  color: var(--muted);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: .01em;
-  margin-bottom: .6rem;
-}
-
-/* Time chips — always visible below the rail */
-.time-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: .3rem;
-}
-.time-chip {
-  font-family: 'Courier New', monospace;
-  font-size: .72rem;
-  font-weight: 600;
-  background: var(--avail-bg);
-  color: var(--avail);
-  border-radius: 4px;
-  padding: .2rem .45rem;
-  letter-spacing: .02em;
-  white-space: nowrap;
-}
-.time-overflow {
-  font-size: .7rem;
-  color: var(--muted);
-  align-self: center;
-  padding-left: .15rem;
-}
-.time-unknown {
+.slot-note {
   font-size: .73rem;
-  color: var(--muted);
-  font-style: italic;
-}
-.time-unknown a { color: var(--navy); }
-.time-note {
-  margin-top: .45rem;
-  font-size: .65rem;
   color: var(--muted);
   font-style: italic;
 }
@@ -486,21 +433,9 @@ const SLOTS_URL = './slots.json';
 const REFRESH_MS = 10 * 60 * 1000;
 const BOOKING_URL = 'https://appointment.indianembassynetherland.com/book_appointment';
 
-// Time rail: 09:00 → 14:00 = 300 min window
-const RAIL_START = 9 * 60;
-const RAIL_END   = 14 * 60;
-const RAIL_RANGE = RAIL_END - RAIL_START;
-
 let data = null;
 let activeService = null;
 let refreshTimer = null;
-
-function parseTimeMinutes(label) {
-  // "0930 – 0938" → 570 (mins from midnight)
-  const m = label.match(/^(\d{2})(\d{2})/);
-  if (!m) return null;
-  return parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-}
 
 function formatDate(ddmmyyyy) {
   // "07-07-2026" → "7 Jul 2026"
@@ -509,39 +444,6 @@ function formatDate(ddmmyyyy) {
   return `${parseInt(d, 10)} ${months[parseInt(mo, 10) - 1]} ${y}`;
 }
 
-function fmtTime(t) {
-  // "0930 – 0938" → "09:30 – 09:38"
-  return t.replace(/\b(\d{2})(\d{2})\b/g, '$1:$2');
-}
-
-function railHtml(times) {
-  const marks = times.map(t => {
-    const mins = parseTimeMinutes(t);
-    if (mins === null) return '';
-    const pct = Math.max(0, Math.min(97, (mins - RAIL_START) / RAIL_RANGE * 100)).toFixed(2);
-    return `<span class="rail-mark" style="left:${pct}%"></span>`;
-  }).join('');
-
-  const MAX_VISIBLE = 10;
-  let chipsHtml;
-  if (times.length === 0) {
-    chipsHtml = `<span class="time-unknown">Exact times unavailable — check the <a href="${BOOKING_URL}" target="_blank" rel="noopener">booking site</a></span>`;
-  } else {
-    const chips = times.slice(0, MAX_VISIBLE)
-      .map(t => `<span class="time-chip">${fmtTime(t)}</span>`).join('');
-    const overflow = times.length > MAX_VISIBLE
-      ? `<span class="time-overflow">+${times.length - MAX_VISIBLE} more</span>` : '';
-    chipsHtml = chips + overflow;
-  }
-
-  return `
-    <div class="rail-wrap" aria-label="Time availability">${marks}</div>
-    <div class="rail-labels">
-      <span>09:00</span><span>10:00</span><span>11:00</span><span>12:00</span><span>13:00</span><span>14:00</span>
-    </div>
-    <div class="time-chips">${chipsHtml}</div>
-    ${times.length > 0 ? '<div class="time-note">Times shown are all available windows for this day — exact allocation per service may differ on the booking site.</div>' : ''}`;
-}
 
 function timeSince(isoStr) {
   const diff = Math.floor((Date.now() - new Date(isoStr)) / 60000);
@@ -637,7 +539,7 @@ function render() {
               <div class="row-day">${d.day.slice(0,3)}</div>
             </div>
             <div class="row-middle">
-              ${railHtml(d.times)}
+              <span class="slot-note">Verify exact times on the booking site</span>
             </div>
             <div class="row-actions">
               <span class="badge">${d.slots_available} slot${d.slots_available !== 1 ? 's' : ''}</span>
