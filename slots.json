@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-01T16:28:17.729880+00:00",
+  "generated_at": "2026-07-01T18:17:16.055658+00:00",
   "period_end": "31-08-2026",
   "booking_url": "https://appointment.indianembassynetherland.com/book_appointment",
   "services": {
@@ -9,10 +9,8 @@
         {
           "date": "13-08-2026",
           "day": "Thursday",
-          "slots_available": 7,
+          "slots_available": 5,
           "times": [
-            "1058 \u2013 1106",
-            "1106 \u2013 1114",
             "1122 \u2013 1130",
             "1130 \u2013 1138",
             "1138 \u2013 1146"
@@ -23,7 +21,6 @@
           "day": "Monday",
           "slots_available": 6,
           "times": [
-            "1042 \u2013 1050",
             "1050 \u2013 1058",
             "1058 \u2013 1106",
             "1146 \u2013 1154",
@@ -225,20 +222,10 @@
           ]
         },
         {
-          "date": "11-08-2026",
-          "day": "Tuesday",
-          "slots_available": 1,
-          "times": [
-            "1002 \u2013 1010"
-          ]
-        },
-        {
           "date": "13-08-2026",
           "day": "Thursday",
           "slots_available": 3,
           "times": [
-            "1058 \u2013 1106",
-            "1106 \u2013 1114",
             "1122 \u2013 1130",
             "1130 \u2013 1138",
             "1138 \u2013 1146"
@@ -257,7 +244,6 @@
           "day": "Monday",
           "slots_available": 3,
           "times": [
-            "1042 \u2013 1050",
             "1050 \u2013 1058",
             "1058 \u2013 1106",
             "1146 \u2013 1154",
@@ -466,30 +452,6 @@
     "5": {
       "name": "Misc. Consular Services",
       "dates": [
-        {
-          "date": "11-08-2026",
-          "day": "Tuesday",
-          "slots_available": 1,
-          "times": [
-            "1002 \u2013 1010"
-          ]
-        },
-        {
-          "date": "17-08-2026",
-          "day": "Monday",
-          "slots_available": 1,
-          "times": [
-            "1042 \u2013 1050",
-            "1050 \u2013 1058",
-            "1058 \u2013 1106",
-            "1146 \u2013 1154",
-            "1154 \u2013 1202",
-            "1218 \u2013 1226",
-            "1226 \u2013 1234",
-            "1234 \u2013 1242",
-            "1242 \u2013 1250"
-          ]
-        },
         {
           "date": "18-08-2026",
           "day": "Tuesday",
