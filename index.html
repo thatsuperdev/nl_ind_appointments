@@ -817,10 +817,10 @@ function render() {
     activeService = ids.find(id => services[id].dates.length > 0) || ids[0];
   }
 
-  // Service pills
+  // Service pills — total open time windows across all dates for this service
   const pills = ids.map(id => {
     const svc = services[id];
-    const count = svc.dates.length;
+    const count = svc.dates.reduce((sum, d) => sum + (d.times ? d.times.length : 0), 0);
     const isActive = id === activeService;
     const isZero  = count === 0;
     return `<button
