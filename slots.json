@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-02T16:31:03.054412+00:00",
+  "generated_at": "2026-07-02T16:45:38.162864+00:00",
   "period_end": "31-08-2026",
   "booking_url": "https://appointment.indianembassynetherland.com/book_appointment",
   "services": {
@@ -27,17 +27,6 @@
             "1154 \u2013 1202",
             "1242 \u2013 1250",
             "1250 \u2013 1258"
-          ]
-        },
-        {
-          "date": "08-07-2026",
-          "day": "Wednesday",
-          "slots_available": 14,
-          "times": [
-            "1210 \u2013 1218",
-            "1226 \u2013 1234",
-            "1234 \u2013 1242",
-            "1242 \u2013 1250"
           ]
         },
         {
@@ -204,17 +193,6 @@
           ]
         },
         {
-          "date": "08-07-2026",
-          "day": "Wednesday",
-          "slots_available": 3,
-          "times": [
-            "1210 \u2013 1218",
-            "1226 \u2013 1234",
-            "1234 \u2013 1242",
-            "1242 \u2013 1250"
-          ]
-        },
-        {
           "date": "09-07-2026",
           "day": "Thursday",
           "slots_available": 2,
@@ -371,17 +349,6 @@
     "5": {
       "name": "Misc. Consular Services",
       "dates": [
-        {
-          "date": "08-07-2026",
-          "day": "Wednesday",
-          "slots_available": 2,
-          "times": [
-            "1210 \u2013 1218",
-            "1226 \u2013 1234",
-            "1234 \u2013 1242",
-            "1242 \u2013 1250"
-          ]
-        },
         {
           "date": "19-08-2026",
           "day": "Wednesday",
