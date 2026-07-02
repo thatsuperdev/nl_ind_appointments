@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-02T15:31:05.147295+00:00",
+  "generated_at": "2026-07-02T15:45:50.294850+00:00",
   "period_end": "31-08-2026",
   "booking_url": "https://appointment.indianembassynetherland.com/book_appointment",
   "services": {
@@ -21,7 +21,7 @@
         {
           "date": "07-07-2026",
           "day": "Tuesday",
-          "slots_available": 9,
+          "slots_available": 8,
           "times": [
             "0954 \u2013 1002",
             "1154 \u2013 1202",
@@ -44,11 +44,10 @@
         {
           "date": "09-07-2026",
           "day": "Thursday",
-          "slots_available": 9,
+          "slots_available": 8,
           "times": [
             "1154 \u2013 1202",
-            "1202 \u2013 1210",
-            "1210 \u2013 1218"
+            "1202 \u2013 1210"
           ]
         },
         {
@@ -224,8 +223,7 @@
           "slots_available": 2,
           "times": [
             "1154 \u2013 1202",
-            "1202 \u2013 1210",
-            "1210 \u2013 1218"
+            "1202 \u2013 1210"
           ]
         },
         {
