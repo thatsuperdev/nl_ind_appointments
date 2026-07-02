@@ -653,7 +653,7 @@ body {
 </main>
 
 <script>
-const SLOTS_URL = './slots.json';
+const SLOTS_URL = '/.netlify/functions/appointment-data';
 const REFRESH_MS = 10 * 60 * 1000;
 
 let data = null;
@@ -782,7 +782,7 @@ async function loadData(options = {}) {
   } catch (e) {
     document.getElementById('app').innerHTML =
       `<div class="alert">Could not load slot data: ${e.message}.<br>
-       Make sure <code>slots.json</code> is deployed alongside this page.</div>`;
+       Make sure the appointment-data function and its Netlify Blobs store are set up (see README).</div>`;
     document.getElementById('last-updated').textContent = 'Data unavailable';
   } finally {
     isLoading = false;

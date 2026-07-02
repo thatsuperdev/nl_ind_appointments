@@ -2,14 +2,14 @@ name: Update Slots — Full
 
 # Runs every 2 hours to discover newly released dates across the full 2-month window.
 # Makes ~79 API calls. Overwrites slots.json completely (no merge).
+#
+# slots.json is NOT committed to git — it's written to Netlify Blobs directly,
+# so this can run as often as needed without polluting history.
 
 on:
   schedule:
     - cron: '0 */2 * * 1-6'   # Mon–Sat, every 2 hours
   workflow_dispatch:
-
-permissions:
-  contents: write
 
 concurrency:
   group: slots-update
@@ -18,6 +18,9 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    env:
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
     steps:
       - uses: actions/checkout@v4
 
@@ -26,24 +29,17 @@ jobs:
           python-version: '3.12'
           cache: pip
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
 
-      - name: Sync latest data
-        run: git pull --rebase origin main
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          npm install -g netlify-cli
 
       - name: Fetch slot data (full)
         run: python check_slots.py
 
-      - name: Commit if changed
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add slots.json
-          if git diff --cached --quiet; then
-            echo "No changes."
-          else
-            git commit -m "chore: update slots.json (full)"
-            git pull --rebase origin main
-            git push
-          fi
+      - name: Write updated data to Netlify Blobs
+        run: netlify blobs:set slots-data slots.json --input slots.json

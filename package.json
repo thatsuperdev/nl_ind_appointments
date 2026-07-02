@@ -1,0 +1,8 @@
+{
+  "name": "nl-ind-appointments",
+  "private": true,
+  "dependencies": {
+    "@netlify/blobs": "^10.7.0",
+    "@netlify/functions": "^5.3.0"
+  }
+}

@@ -1,11 +1,13 @@
 [build]
   publish = "."
+  functions = "netlify/functions"
 
-# slots.json must never be served stale from CDN — always revalidate
-[[headers]]
-  for = "/slots.json"
-  [headers.values]
-    Cache-Control = "public, max-age=0, must-revalidate"
+# Data now lives in Netlify Blobs (written directly by the GitHub Action, no
+# git commit involved) and is served through a function rather than as a
+# plain static /slots.json file — see netlify/functions/appointment-data.mts.
+# The function itself checks Origin/Referer so the feed isn't casually
+# fetchable outside our own page (not a hard security boundary, just keeps it
+# off of naive scraping/hotlinking).
 
 # index.html same — ensures users get the latest deploy immediately
 [[headers]]

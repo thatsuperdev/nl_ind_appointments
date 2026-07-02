@@ -19,10 +19,12 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      FRESHNESS_WATCHDOG_SECRET: ${{ secrets.FRESHNESS_WATCHDOG_SECRET }}
     steps:
-      - name: Verify production slots.json is fresh
+      - name: Verify production data feed is fresh
         run: |
-          generated_at=$(curl -sf https://nl-ind-embassyappointments.netlify.app/slots.json | python3 -c "import json,sys; print(json.load(sys.stdin)['generated_at'])")
+          generated_at=$(curl -sf -H "x-freshness-check: $FRESHNESS_WATCHDOG_SECRET" https://nl-ind-embassyappointments.netlify.app/.netlify/functions/appointment-data | python3 -c "import json,sys; print(json.load(sys.stdin)['generated_at'])")
           echo "Production generated_at: $generated_at"
 
           age_seconds=$(python3 -c "

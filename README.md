@@ -14,19 +14,25 @@ A public page showing available appointment slots at the Indian Embassy in The H
 
 ```
 GitHub Actions cron
-  ├─ Quick scan (every 10 min, Mon–Sat 08:00–16:00 Amsterdam)
-  │    Checks next 14 days · ~14 API calls · merges with existing data
+  ├─ Quick scan (every 15 min, plus 5-min bursts around Thu/1st release windows)
+  │    Checks next 14 days · merges with existing data
   └─ Full scan (every 2 hours)
-       Checks current + next month · ~45 API calls · rebuilds completely
+       Checks current + next month · rebuilds completely
           ↓
-       commits slots.json
+       writes slots.json to Netlify Blobs (netlify-cli, no git commit)
           ↓
-       Netlify auto-deploys (~30s)
+       /.netlify/functions/appointment-data serves it (gated, see below)
           ↓
-       index.html fetches fresh slots.json every 10 min
+       index.html fetches it every 10 min
 ```
 
 The Python script fetches a fresh CSRF token from the booking page on every run, so no manual token management is needed.
+
+`slots.json` is **not** committed to git — it's gitignored, and there is no static `/slots.json` file in the deploy at all. The data lives in [Netlify Blobs](https://docs.netlify.com/build/data-and-storage/netlify-blobs/) and is served through a Netlify Function (`netlify/functions/appointment-data.mts`). This keeps the cron cadence (down to a few minutes, if needed) from spamming the git history or triggering a full Netlify rebuild on every run — Blob writes don't create commits or deploys.
+
+**Access gating:** the function only serves data to requests whose `Origin`/`Referer` matches the site's own domain (i.e. loaded from `index.html`), or that carry the `x-freshness-check` secret header used by the watchdog. A bare `curl` or a browser hitting the function URL directly gets a 403. This is a soft gate, not real auth — headers can be spoofed by a determined caller — but it stops the feed from being casually scraped, indexed, or hotlinked outside the page.
+
+> **Invariant:** don't add a static `slots.json` file back into the deployed root — if one exists, Netlify will serve it directly and bypass the function's gating entirely.
 
 ---
 
@@ -40,15 +46,27 @@ The Python script fetches a fresh CSRF token from the booking page on every run,
    Publish directory: `.`
 4. Deploy — your site is live
 
-### 2. Enable GitHub Actions write access
+### 2. Create a Netlify Blobs store and auth token
 
-In your fork: **Settings → Actions → General → Workflow permissions → Read and write permissions**
+1. Grab your **Site ID**: Netlify site → **Project configuration → General → Project information → Project ID**
+2. Create a **Personal Access Token**: Netlify **User settings → Applications → New access token**
+3. In your fork: **Settings → Secrets and variables → Actions**, add:
+   - `NETLIFY_SITE_ID` — the Site ID from step 1
+   - `NETLIFY_AUTH_TOKEN` — the token from step 2
 
-This allows the cron job to commit updated `slots.json` back to the repo (which triggers a Netlify redeploy automatically).
+The workflows use these (via `netlify-cli`) to read/write the `slots-data` blob store directly — no GitHub write access to the repo is needed for this.
 
-### 3. Trigger the first run
+### 3. Set a freshness-watchdog secret
 
-Go to **Actions → Update Slots — Full → Run workflow** to populate `slots.json` with real data immediately, rather than waiting for the next scheduled run.
+1. Pick any random string as a shared secret.
+2. Add it as a GitHub Actions secret `FRESHNESS_WATCHDOG_SECRET`.
+3. Add the *same* value as a Netlify **environment variable** (Site configuration → Environment variables) named `FRESHNESS_WATCHDOG_SECRET`, so the function can check it.
+
+This lets the hourly `check-freshness.yml` watchdog read the data feed directly without opening it up to anyone else who just requests the URL.
+
+### 4. Trigger the first run
+
+Go to **Actions → Update Slots — Full → Run workflow** to populate the blob store with real data immediately, rather than waiting for the next scheduled run.
 
 ---
 
@@ -77,12 +95,14 @@ python -m http.server 3000
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Static frontend — fetches and renders `slots.json` |
-| `slots.json` | Generated data file — committed by CI, served by Netlify |
+| `index.html` | Static frontend — fetches and renders the appointment data feed |
+| `slots.json` | Generated data file (gitignored) — written locally, then pushed to Netlify Blobs |
 | `check_slots.py` | Scraper — fetches token, calls API in parallel, writes `slots.json` |
-| `netlify.toml` | Cache-control headers — ensures `slots.json` is never served stale |
-| `.github/workflows/update-slots-quick.yml` | 10-min cron for near-term freshness |
+| `netlify/functions/appointment-data.mts` | Serves the blob, gated by Origin/Referer + watchdog secret |
+| `netlify.toml` | Cache-control headers so the data feed is never served stale |
+| `.github/workflows/update-slots-quick.yml` | 15-min cron (with denser release-window bursts) for near-term freshness |
 | `.github/workflows/update-slots-full.yml` | 2-hour cron for full date range |
+| `.github/workflows/check-freshness.yml` | Hourly watchdog hitting the gated function with the shared secret |
 
 ---
 

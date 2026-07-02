@@ -2,3 +2,9 @@ __pycache__/
 *.pyc
 .claude/
 handover.md
+node_modules/
+slots.json
+
+
+# Local Netlify folder
+.netlify
