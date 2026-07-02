@@ -606,6 +606,10 @@ body {
 
 /* ── Contact dialog ───────────────────────────────────────── */
 .contact-dialog {
+  /* The global `* { margin: 0 }` reset overrides the UA stylesheet's
+     `dialog { margin: auto }`, which is what centers a dialog by default —
+     restore it explicitly or the dialog anchors to the top-left corner. */
+  margin: auto;
   border: none;
   border-radius: var(--radius);
   padding: 1.6rem;
