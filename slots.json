@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-07-02T21:45:33.943732+00:00",
+  "generated_at": "2026-07-02T21:58:11.100148+00:00",
   "period_end": "31-08-2026",
   "booking_url": "https://appointment.indianembassynetherland.com/book_appointment",
   "services": {
@@ -314,6 +314,15 @@
     "5": {
       "name": "Misc. Consular Services",
       "dates": [
+        {
+          "date": "07-07-2026",
+          "day": "Tuesday",
+          "slots_available": 1,
+          "times": [
+            "1242 \u2013 1250",
+            "1250 \u2013 1258"
+          ]
+        },
         {
           "date": "19-08-2026",
           "day": "Wednesday",
