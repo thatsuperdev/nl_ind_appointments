@@ -1,0 +1,40 @@
+name: Check Data Freshness
+
+# Watchdog: verifies the LIVE production slots.json (not just the git file) is
+# recent. Catches silent breakages that git history alone won't show — e.g.
+# Netlify skipping a deploy, a scraper workflow failing quietly, or the
+# embassy API changing shape. A failed run here triggers GitHub's default
+# workflow-failure email, so staleness gets noticed without a human eyeballing
+# the site.
+#
+# Runs hourly rather than every 15 min: GitHub's schedule trigger is
+# best-effort and frequently delays/drops sub-hourly crons under load, so an
+# hourly cadence is actually honored more reliably than a denser one.
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify production slots.json is fresh
+        run: |
+          generated_at=$(curl -sf https://nl-ind-embassyappointments.netlify.app/slots.json | python3 -c "import json,sys; print(json.load(sys.stdin)['generated_at'])")
+          echo "Production generated_at: $generated_at"
+
+          age_seconds=$(python3 -c "
+          from datetime import datetime, timezone
+          gen = datetime.fromisoformat('$generated_at')
+          now = datetime.now(timezone.utc)
+          print(int((now - gen).total_seconds()))
+          ")
+          age_hours=$((age_seconds / 3600))
+          echo "Age: ${age_hours}h"
+
+          if [ "$age_seconds" -gt 14400 ]; then
+            echo "::error::Production slots.json is ${age_hours}h old (threshold: 4h). Check Netlify deploys and the update-slots workflows."
+            exit 1
+          fi
