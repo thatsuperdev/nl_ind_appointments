@@ -48,7 +48,7 @@ jobs:
           if git diff --cached --quiet; then
             echo "No changes."
           else
-            git commit -m "chore: update slots.json (frequent) [skip ci]"
+            git commit -m "chore: update slots.json (frequent)"
             git pull --rebase origin main
             git push
           fi
