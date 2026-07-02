@@ -787,6 +787,17 @@ body {
   </div>
 </main>
 
+<!-- Netlify's build-time form parser doesn't reliably detect forms nested inside
+     a <dialog>, so this hidden shadow form (same name + field names) exists purely
+     so Netlify registers the "contact" form. The real form below is what users fill in. -->
+<form name="contact" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input type="text" name="name">
+  <input type="email" name="email">
+  <input type="text" name="subject">
+  <textarea name="message"></textarea>
+  <input name="bot-field">
+</form>
+
 <dialog class="contact-dialog" id="contact-dialog" aria-labelledby="contact-dialog-title">
   <button type="button" class="dialog-close" id="contact-dialog-close" aria-label="Close">&times;</button>
   <div class="contact-heading" id="contact-dialog-title">Get in touch</div>
