@@ -572,10 +572,144 @@ body {
   border-top: 1px solid var(--border);
   font-size: .72rem;
   color: var(--muted);
-  text-align: center;
   line-height: 1.45;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem 1.5rem;
+  flex-wrap: wrap;
 }
 .footer-note a { color: var(--navy); }
+.footer-credit {
+  white-space: nowrap;
+  color: var(--muted);
+}
+.footer-credit a {
+  color: var(--navy);
+  font-weight: 600;
+  text-decoration: none;
+}
+.footer-credit a:hover { text-decoration: underline; }
+.footer-link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-size: inherit;
+  color: var(--navy);
+  font-weight: 600;
+  cursor: pointer;
+}
+.footer-link-btn:hover { text-decoration: underline; }
+
+/* ── Contact dialog ───────────────────────────────────────── */
+.contact-dialog {
+  border: none;
+  border-radius: var(--radius);
+  padding: 1.6rem;
+  max-width: 560px;
+  width: calc(100% - 2.5rem);
+  background: var(--paper);
+  color: var(--text);
+  box-shadow: var(--shadow-md);
+}
+.contact-dialog::backdrop {
+  background: rgba(26,43,94,.45);
+}
+.contact-dialog[open] { animation: dialog-in .16s ease-out; }
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.dialog-close {
+  position: absolute;
+  top: .7rem;
+  right: .8rem;
+  background: none;
+  border: none;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: .25rem .5rem;
+}
+.dialog-close:hover { color: var(--text); }
+.contact-heading {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: .3rem;
+}
+.contact-sub {
+  font-size: .8rem;
+  color: var(--muted);
+  margin-bottom: 1rem;
+}
+.contact-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .85rem 1rem;
+}
+.contact-field { display: flex; flex-direction: column; gap: .35rem; }
+.contact-field.full { grid-column: 1 / -1; }
+.contact-field label {
+  font-size: .74rem;
+  font-weight: 600;
+  color: var(--text);
+}
+.contact-field input,
+.contact-field textarea {
+  font: inherit;
+  font-size: .85rem;
+  padding: .55rem .7rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--text);
+  resize: vertical;
+}
+.contact-field input:focus,
+.contact-field textarea:focus {
+  outline: none;
+  border-color: var(--navy);
+  box-shadow: 0 0 0 3px var(--navy-dim, rgba(26,43,94,.12));
+}
+.contact-submit {
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  padding: .6rem 1.3rem;
+  background: var(--navy);
+  color: var(--white);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: .85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.contact-submit:hover:not(:disabled) { background: var(--navy-mid); }
+.contact-submit:disabled { opacity: .6; cursor: not-allowed; }
+.contact-status {
+  grid-column: 1 / -1;
+  font-size: .8rem;
+}
+.contact-status.success { color: var(--avail); }
+.contact-status.error { color: var(--danger); }
+.hidden-field {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+@media (max-width: 560px) {
+  .contact-form { grid-template-columns: 1fr; }
+  .footer-note { justify-content: flex-start; }
+}
 
 /* ── Responsive ──────────────────────────────────────────── */
 @media (max-width: 560px) {
@@ -647,10 +781,42 @@ body {
     </div>
   </div>
   <div class="footer-note">
-    Slots are reported by the embassy booking API and refresh every 10 minutes.
-    Always confirm on the <a href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener">official booking site</a>.
+    <span>Slots are reported by the embassy booking API and refresh every 10 minutes.
+    Always confirm on the <a href="https://appointment.indianembassynetherland.com/book_appointment" target="_blank" rel="noopener">official booking site</a>.</span>
+    <span class="footer-credit"><button type="button" class="footer-link-btn" id="contact-trigger">Contact</button> · Built with ❤️ by <a href="https://github.com/thatsuperdev/nl_ind_appointments" target="_blank" rel="noopener">Sayed</a> in 🇳🇱</span>
   </div>
 </main>
+
+<dialog class="contact-dialog" id="contact-dialog" aria-labelledby="contact-dialog-title">
+  <button type="button" class="dialog-close" id="contact-dialog-close" aria-label="Close">&times;</button>
+  <div class="contact-heading" id="contact-dialog-title">Get in touch</div>
+  <div class="contact-sub">Spotted a bug or have feedback? Send a note below.</div>
+  <form name="contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" id="contact-form" class="contact-form">
+    <input type="hidden" name="form-name" value="contact">
+    <p class="hidden-field">
+      <label>Don't fill this out if you're human: <input name="bot-field"></label>
+    </p>
+
+    <div class="contact-field">
+      <label for="contact-name">Name</label>
+      <input type="text" id="contact-name" name="name" autocomplete="name" required>
+    </div>
+    <div class="contact-field">
+      <label for="contact-email">Email</label>
+      <input type="email" id="contact-email" name="email" autocomplete="email" required>
+    </div>
+    <div class="contact-field full">
+      <label for="contact-subject">Subject</label>
+      <input type="text" id="contact-subject" name="subject" required>
+    </div>
+    <div class="contact-field full">
+      <label for="contact-message">Message</label>
+      <textarea id="contact-message" name="message" rows="4" required></textarea>
+    </div>
+    <button type="submit" class="contact-submit" id="contact-submit">Send message</button>
+    <div class="contact-status" id="contact-status" role="status" aria-live="polite"></div>
+  </form>
+</dialog>
 
 <script>
 const SLOTS_URL = '/.netlify/functions/appointment-data';
@@ -916,6 +1082,57 @@ function selectService(id) {
     p.classList.toggle('active', p.id === 'panel-' + id)
   );
   updateActiveServiceHead();
+}
+
+const contactDialog = document.getElementById('contact-dialog');
+const contactTrigger = document.getElementById('contact-trigger');
+const contactDialogClose = document.getElementById('contact-dialog-close');
+if (contactDialog && contactTrigger) {
+  contactTrigger.addEventListener('click', () => {
+    contactDialog.showModal();
+    gtrack('contact_open', {});
+  });
+  contactDialogClose.addEventListener('click', () => contactDialog.close());
+  contactDialog.addEventListener('click', (e) => {
+    if (e.target === contactDialog) contactDialog.close();
+  });
+  contactDialog.addEventListener('close', () => {
+    const status = document.getElementById('contact-status');
+    status.textContent = '';
+    status.className = 'contact-status';
+  });
+}
+
+const contactForm = document.getElementById('contact-form');
+if (contactForm) {
+  contactForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const submitBtn = document.getElementById('contact-submit');
+    const status = document.getElementById('contact-status');
+    const body = new URLSearchParams(new FormData(contactForm)).toString();
+
+    submitBtn.disabled = true;
+    status.textContent = '';
+    status.className = 'contact-status';
+
+    try {
+      const res = await fetch('/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+      });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      status.textContent = 'Thanks — your message has been sent.';
+      status.className = 'contact-status success';
+      contactForm.reset();
+      gtrack('contact_submit', {});
+    } catch (err) {
+      status.textContent = 'Could not send your message. Please try again, or reach out via GitHub.';
+      status.className = 'contact-status error';
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
 }
 
 
