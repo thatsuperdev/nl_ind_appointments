@@ -232,8 +232,10 @@ def main():
     weekdays = [d for d in all_weekdays if d.isoformat() not in blocked_dates]
     skipped = len(all_weekdays) - len(weekdays)
     if not weekdays:
-        print("All dates in the scan window are blocked by the embassy datepicker.")
-        sys.exit(1)
+        print("All dates in the scan window are blocked by the embassy datepicker — no slots to report.")
+        write_slots_json([], set(), "slots.json", merge=quick, blocked_dates=blocked_dates)
+        print("\nData saved to: slots.json")
+        return
     print(f"Checking {len(weekdays)} weekdays from {weekdays[0]} to {weekdays[-1]}...")
     if skipped:
         print(f"Skipping {skipped} blocked dates from embassy datepicker.")
