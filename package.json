@@ -1,6 +1,9 @@
 {
   "name": "nl-ind-appointments",
   "private": true,
+  "scripts": {
+    "deploy:prod": "netlify deploy --prod --dir=."
+  },
   "dependencies": {
     "@netlify/blobs": "^10.7.0",
     "@netlify/functions": "^5.3.0"

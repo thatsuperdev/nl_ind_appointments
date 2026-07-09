@@ -229,16 +229,11 @@ def main():
 
     # Step 2: Get list of weekdays to check
     all_weekdays = get_weekdays(days_ahead=14) if quick else get_weekdays(months_ahead=1)
-    weekdays = [d for d in all_weekdays if d.isoformat() not in blocked_dates]
-    skipped = len(all_weekdays) - len(weekdays)
-    if not weekdays:
-        print("All dates in the scan window are blocked by the embassy datepicker — no slots to report.")
-        write_slots_json([], set(), "slots.json", merge=quick, blocked_dates=blocked_dates)
-        print("\nData saved to: slots.json")
-        return
+    weekdays = all_weekdays
     print(f"Checking {len(weekdays)} weekdays from {weekdays[0]} to {weekdays[-1]}...")
-    if skipped:
-        print(f"Skipping {skipped} blocked dates from embassy datepicker.")
+    blocked_in_window = sum(1 for d in weekdays if d.isoformat() in blocked_dates)
+    if blocked_in_window:
+        print(f"{blocked_in_window} dates are disabled in the datepicker; checking API anyway.")
     print("(Each date uses a fresh session — server rate-limits shared sessions after ~4 requests)")
 
     # Step 3: Fetch all dates in parallel — each worker self-creates its own session
@@ -309,6 +304,7 @@ def write_slots_json(
     blocked_dates: set[str] | None = None,
 ):
     blocked_dates = blocked_dates or set()
+    today = date.today()
     # In merge mode, load existing data so full-range dates are preserved
     existing = {}
     if merge:
@@ -335,7 +331,14 @@ def write_slots_json(
         if merge:
             for d in existing.get("services", {}).get(svc_id, {}).get("dates", []):
                 date_key = ddmmyyyy_to_iso(d.get("date", ""))
-                if d["date"] not in fresh_dates and date_key not in blocked_dates and d.get("times"):
+                if not date_key:
+                    continue
+                appt_date = date.fromisoformat(date_key)
+                if (
+                    appt_date >= today
+                    and d["date"] not in fresh_dates
+                    and d.get("times")
+                ):
                     kept.append(d)
 
         # Add fresh results for the window we just checked.
