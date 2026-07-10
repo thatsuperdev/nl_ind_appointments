@@ -2,7 +2,7 @@
   "name": "nl-ind-appointments",
   "private": true,
   "scripts": {
-    "deploy:prod": "netlify deploy --prod --dir=."
+    "deploy:prod": "sh -c 'tmp=$(mktemp -d); restore(){ if [ -f \"$tmp/slots.json\" ]; then mv \"$tmp/slots.json\" slots.json; fi; rmdir \"$tmp\"; }; trap restore EXIT; if [ -f slots.json ]; then mv slots.json \"$tmp/slots.json\"; fi; netlify deploy --prod --context production --dir=.'"
   },
   "dependencies": {
     "@netlify/blobs": "^10.7.0",

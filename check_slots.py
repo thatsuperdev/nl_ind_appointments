@@ -279,6 +279,8 @@ def main():
         print(f"{'─' * 55}")
         has_any = False
         for r in results:
+            if r["date"].isoformat() in blocked_dates:
+                continue
             svc_data = r["services"].get(svc_id, {})
             count = svc_data.get("available", 0)
             if count > 0 and r["available_times"]:
@@ -337,6 +339,7 @@ def write_slots_json(
                 if (
                     appt_date >= today
                     and d["date"] not in fresh_dates
+                    and date_key not in blocked_dates
                     and d.get("times")
                 ):
                     kept.append(d)
@@ -345,6 +348,8 @@ def write_slots_json(
         # Keep the service-specific count as slots_available. timeslots_html is
         # the shared appointment-window list for the date, not a per-service count.
         for r in results:
+            if r["date"].isoformat() in blocked_dates:
+                continue
             svc_data = r["services"].get(svc_id, {})
             count = svc_data.get("available", 0)
             if count > 0 and r["available_times"]:
