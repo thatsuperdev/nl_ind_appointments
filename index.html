@@ -1091,6 +1091,7 @@
 
   <script>
     const SLOTS_URL = '/.netlify/functions/appointment-data';
+    const REFRESH_REQUEST_URL = '/.netlify/functions/request-refresh';
     const REFRESH_MS = 10 * 60 * 1000;
 
     let data = null;
@@ -1209,13 +1210,36 @@
         gtrack('manual_refresh', {});
         document.getElementById('last-updated').textContent = 'Checking latest data…';
       }
+      let refreshResult = null;
       try {
+        if (options.manual) {
+          try {
+            const refreshRes = await fetch(REFRESH_REQUEST_URL, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            refreshResult = await refreshRes.json();
+            if (!refreshRes.ok) throw new Error(refreshResult.error || `HTTP ${refreshRes.status}`);
+          } catch (error) {
+            refreshResult = { requested: false, error: error.message || 'Refresh unavailable' };
+          }
+        }
         const res = await fetch(SLOTS_URL + '?t=' + Date.now());
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         data = await res.json();
         render();
+        if (options.manual && refreshResult) {
+          const message = refreshResult.error
+            ? 'Refresh unavailable — showing latest cached data'
+            : refreshResult.requested
+            ? 'Refresh started — showing latest cached data'
+            : refreshResult.reason === 'refresh-cooldown'
+              ? 'Refresh already in progress — showing latest cached data'
+              : 'Data is already fresh';
+          document.getElementById('last-updated').textContent = message;
+        }
         if (refreshTimer) clearTimeout(refreshTimer);
-        refreshTimer = setTimeout(loadData, REFRESH_MS);
+        refreshTimer = setTimeout(loadData, refreshResult?.requested ? 30 * 1000 : REFRESH_MS);
       } catch (e) {
         document.getElementById('app').innerHTML =
           `<div class="alert">Could not load slot data: ${e.message}.<br>

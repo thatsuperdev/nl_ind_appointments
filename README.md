@@ -26,6 +26,11 @@ GitHub Actions cron
        index.html fetches it every 10 min
 ```
 
+The **Refresh** CTA calls `/.netlify/functions/request-refresh`. It dispatches
+the quick GitHub Action only when the cache is stale or the current Amsterdam
+time is near the embassy's Thursday/first-of-month 09:00 release window. A
+five-minute cooldown prevents repeated clicks from queueing duplicate runs.
+
 The Python script fetches a fresh CSRF token from the booking page on every run, so no manual token management is needed.
 
 `slots.json` is **not** committed to git — it's gitignored, and there is no static `/slots.json` file in the deploy at all. The data lives in [Netlify Blobs](https://docs.netlify.com/build/data-and-storage/netlify-blobs/) and is served through a Netlify Function (`netlify/functions/appointment-data.mts`). This keeps the cron cadence (down to a few minutes, if needed) from spamming the git history or triggering a full Netlify rebuild on every run — Blob writes don't create commits or deploys.
@@ -56,7 +61,16 @@ The Python script fetches a fresh CSRF token from the booking page on every run,
 
 The workflows use these (via `netlify-cli`) to read/write the `slots-data` blob store directly — no GitHub write access to the repo is needed for this.
 
-### 3. Set a freshness-watchdog secret
+### 3. Configure the Refresh CTA
+
+Add these Netlify environment variables:
+
+- `GITHUB_WORKFLOW_TOKEN` — a GitHub token allowed to dispatch workflows in the repository
+- `GITHUB_REPOSITORY` — defaults to `thatsuperdev/nl_ind_appointments`
+- `GITHUB_WORKFLOW_FILE` — defaults to `update-slots-quick.yml`
+- `GITHUB_WORKFLOW_REF` — defaults to `main`
+
+### 4. Set a freshness-watchdog secret
 
 1. Pick any random string as a shared secret.
 2. Add it as a GitHub Actions secret `FRESHNESS_WATCHDOG_SECRET`.
@@ -64,7 +78,7 @@ The workflows use these (via `netlify-cli`) to read/write the `slots-data` blob 
 
 This lets the hourly `check-freshness.yml` watchdog read the data feed directly without opening it up to anyone else who just requests the URL.
 
-### 4. Trigger the first run
+### 5. Trigger the first run
 
 Go to **Actions → Update Slots — Full → Run workflow** to populate the blob store with real data immediately, rather than waiting for the next scheduled run.
 
