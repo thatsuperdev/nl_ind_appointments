@@ -6,7 +6,7 @@
 A public page showing available appointment slots at the Indian Embassy in The Hague, updated every 10 minutes during embassy hours.
 
 **Live site:** deploy to Netlify (see setup below)  
-**Data source:** [appointment.indianembassynetherland.com](https://appointment.indianembassynetherland.com/book_appointment)
+**Data source:** [appointment.indianembassynetherland.com](https://appointment.indianembassynetherland.com/)
 
 ---
 
@@ -108,4 +108,4 @@ python -m http.server 3000
 
 ## Disclaimer
 
-This project is not affiliated with the Indian Embassy Netherlands. Always confirm availability on the [official booking site](https://appointment.indianembassynetherland.com/book_appointment) before travelling.
+This project is not affiliated with the Indian Embassy Netherlands. Always confirm availability on the [official booking site](https://appointment.indianembassynetherland.com/) before travelling.

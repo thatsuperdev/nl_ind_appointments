@@ -14,7 +14,9 @@ from datetime import date, datetime, timedelta, timezone
 
 import requests
 
-BOOKING_URL = "https://appointment.indianembassynetherland.com/book_appointment"
+# The embassy retired /book_appointment. The current flow starts at the
+# instruction page, then POSTs /submitInstruction to reach the application.
+BOOKING_URL = "https://appointment.indianembassynetherland.com/"
 API_URL = "https://appointment.indianembassynetherland.com/getBookingData"
 SUBMIT_INSTRUCTION_URL = "https://appointment.indianembassynetherland.com/submitInstruction"
 
