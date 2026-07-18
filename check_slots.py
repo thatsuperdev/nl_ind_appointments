@@ -118,7 +118,7 @@ def booking_form_html(session: requests.Session) -> str:
     """Return the actual appointment form HTML, accepting instructions if needed."""
     page = session.get(BOOKING_URL, timeout=15)
     page.raise_for_status()
-    if 'id="Appointment"' in page.text and "getBookingData" in page.text:
+    if "no_dates" in page.text and "getBookingData" in page.text:
         return page.text
 
     token = extract_csrf_token(page.text)
@@ -132,7 +132,7 @@ def booking_form_html(session: requests.Session) -> str:
         timeout=15,
     )
     form.raise_for_status()
-    if 'id="Appointment"' not in form.text:
+    if "no_dates" not in form.text or "getBookingData" not in form.text:
         raise RuntimeError("Instruction submit did not return booking form")
     return form.text
 
