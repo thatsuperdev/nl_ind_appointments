@@ -17,7 +17,8 @@ import requests
 # The embassy retired /book_appointment. The current flow starts at the
 # instruction page, then POSTs /submitInstruction to reach the application.
 BOOKING_URL = "https://appointment.indianembassynetherland.com/"
-API_URL = "https://appointment.indianembassynetherland.com/getBookingData"
+TIME_SLOTS_URL = "https://appointment.indianembassynetherland.com/time_slots"
+BLOCKED_DATES_URL = "https://appointment.indianembassynetherland.com/blockedDateslist"
 SUBMIT_INSTRUCTION_URL = "https://appointment.indianembassynetherland.com/submitInstruction"
 
 SERVICE_NAMES = {
@@ -107,18 +108,11 @@ def extract_csrf_token(html: str) -> str:
     raise RuntimeError("Could not extract CSRF token")
 
 
-def extract_js_string_array(html: str, name: str) -> set[str]:
-    match = re.search(rf"\bvar\s+{re.escape(name)}\s*=\s*(\[[^;]*\]);", html, re.S)
-    if not match:
-        raise RuntimeError(f"Could not extract {name} from booking form")
-    return set(re.findall(r'"([^"]+)"', match.group(1)))
-
-
 def booking_form_html(session: requests.Session) -> str:
     """Return the actual appointment form HTML, accepting instructions if needed."""
     page = session.get(BOOKING_URL, timeout=15)
     page.raise_for_status()
-    if "no_dates" in page.text and "getBookingData" in page.text:
+    if 'id="getAppointment"' in page.text and "time_slots" in page.text:
         return page.text
 
     token = extract_csrf_token(page.text)
@@ -132,7 +126,7 @@ def booking_form_html(session: requests.Session) -> str:
         timeout=15,
     )
     form.raise_for_status()
-    if "no_dates" not in form.text or "getBookingData" not in form.text:
+    if 'id="getAppointment"' not in form.text or "time_slots" not in form.text:
         raise RuntimeError("Instruction submit did not return booking form")
     return form.text
 
@@ -145,28 +139,47 @@ def fresh_session_and_token() -> tuple[requests.Session, str]:
     return session, extract_csrf_token(form_html)
 
 
-def fetch_blocked_dates() -> set[str]:
-    """Return yyyy-mm-dd dates blocked by the embassy datepicker."""
+def fetch_blocked_dates(category: str) -> set[str]:
+    """Return yyyy-mm-dd dates blocked for one service category."""
     session = requests.Session()
     session.headers.update(HEADERS)
     form_html = booking_form_html(session)
-    return extract_js_string_array(form_html, "no_dates")
+    token = extract_csrf_token(form_html)
+    response = session.post(
+        BLOCKED_DATES_URL,
+        data={"category": category, "_token": token},
+        timeout=15,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    raw_dates = payload.get("data", {}).get("no_dates", [])
+    if isinstance(raw_dates, str):
+        raw_dates = re.split(r"[,|]", raw_dates)
+    return {value.strip() for value in raw_dates if value and re.match(r"^\d{4}-\d{2}-\d{2}$", value.strip())}
 
 
-def fetch_slot_data(appt_date: date) -> dict:
-    """Fetch slot data for a single date using a fresh session per call.
+def fetch_slot_data(appt_date: date, category: str, blocked_dates: set[str]) -> dict:
+    """Fetch slot data for one service/date using a fresh session per call.
 
     The embassy server invalidates its session after a handful of requests,
     so each date must start with its own fresh session + CSRF token.
     """
     date_str = appt_date.strftime("%d-%m-%Y")
+    if appt_date.isoformat() in blocked_dates:
+        return {
+            "date": appt_date,
+            "date_str": date_str,
+            "available_times": [],
+            "services": {category: {"name": SERVICE_NAMES[category], "available": 0}},
+            "error": None,
+        }
     last_err = ""
     for attempt in range(3):
         try:
             session, token = fresh_session_and_token()
             resp = session.post(
-                API_URL,
-                data={"appmnt_date": date_str, "_token": token},
+                TIME_SLOTS_URL,
+                data={"appmnt_date": date_str, "category": category, "_token": token},
                 timeout=15,
             )
             if resp.status_code == 429:
@@ -183,16 +196,16 @@ def fetch_slot_data(appt_date: date) -> dict:
                 }
             resp.raise_for_status()
             data = resp.json()
-            available_times = parse_available_slots_v2(data.get("timeslots_html", ""))
-            services_raw = data.get("services", {})
-            services = {}
-            for k, v in services_raw.items():
-                count_match = re.search(r'\((\d+) available\)', v)
-                name_match = re.match(r'^(.+?)\s*\(', v)
-                if name_match:
-                    name = name_match.group(1).strip()
-                    count = int(count_match.group(1)) if count_match else 0
-                    services[k] = {"name": name, "available": count}
+            slot_data = data.get("data", "")
+            if isinstance(slot_data, dict):
+                slot_data = slot_data.get("timeslots_html", "")
+            available_times = parse_available_slots_v2(slot_data)
+            services = {
+                category: {
+                    "name": SERVICE_NAMES[category],
+                    "available": len(available_times),
+                }
+            }
             return {
                 "date": appt_date,
                 "date_str": date_str,
@@ -222,9 +235,12 @@ def main():
     # Verify connectivity and mirror the booking form's blocked-date calendar.
     print("\nVerifying connectivity to booking site...", end=" ", flush=True)
     try:
-        blocked_dates = fetch_blocked_dates()
+        blocked_dates_by_service = {
+            svc_id: fetch_blocked_dates(svc_id) for svc_id in SERVICE_NAMES
+        }
         _, sample_token = fresh_session_and_token()
-        print(f"OK (token: {sample_token[:12]}..., blocked dates: {len(blocked_dates)})")
+        blocked_total = sum(len(dates) for dates in blocked_dates_by_service.values())
+        print(f"OK (token: {sample_token[:12]}..., service-specific blocked dates: {blocked_total})")
     except Exception as e:
         print(f"FAILED\n{e}")
         sys.exit(1)
@@ -233,17 +249,23 @@ def main():
     all_weekdays = get_weekdays(days_ahead=14) if quick else get_weekdays(months_ahead=1)
     weekdays = all_weekdays
     print(f"Checking {len(weekdays)} weekdays from {weekdays[0]} to {weekdays[-1]}...")
-    blocked_in_window = sum(1 for d in weekdays if d.isoformat() in blocked_dates)
+    blocked_in_window = sum(
+        1
+        for dates in blocked_dates_by_service.values()
+        for d in weekdays
+        if d.isoformat() in dates
+    )
     if blocked_in_window:
-        print(f"{blocked_in_window} dates are disabled in the datepicker; checking API anyway.")
+        print(f"{blocked_in_window} service/date combinations are disabled in the datepicker.")
     print("(Each date uses a fresh session — server rate-limits shared sessions after ~4 requests)")
 
-    # Step 3: Fetch all dates in parallel — each worker self-creates its own session
+    # Step 3: Fetch all service/date combinations in parallel — each worker self-creates its own session
     results = []
     errors = 0
     with ThreadPoolExecutor(max_workers=4) as executor:
         futures = {
-            executor.submit(fetch_slot_data, d): d
+            executor.submit(fetch_slot_data, d, svc_id, blocked_dates_by_service[svc_id]): (svc_id, d)
+            for svc_id in SERVICE_NAMES
             for d in weekdays
         }
         done = 0
@@ -253,14 +275,14 @@ def main():
             done += 1
             if result["error"]:
                 errors += 1
-            print(f"\r  Progress: {done}/{len(weekdays)} dates checked", end="", flush=True)
+            print(f"\r  Progress: {done}/{len(futures)} service/date checks", end="", flush=True)
 
     if errors:
         print(f"\n  Done with {errors}/{len(weekdays)} errors.")
     else:
         print("\n  Done.")
 
-    if errors == len(weekdays):
+    if errors == len(futures):
         print("All requests failed — not writing slots.json to avoid overwriting good data.")
         sys.exit(1)
 
@@ -281,8 +303,6 @@ def main():
         print(f"{'─' * 55}")
         has_any = False
         for r in results:
-            if r["date"].isoformat() in blocked_dates:
-                continue
             svc_data = r["services"].get(svc_id, {})
             count = svc_data.get("available", 0)
             if count > 0 and r["available_times"]:
@@ -296,7 +316,13 @@ def main():
 
     # Step 7: Write slots.json for the hosted page
     json_path = "slots.json"
-    write_slots_json(results, all_services, json_path, merge=quick, blocked_dates=blocked_dates)
+    write_slots_json(
+        results,
+        all_services,
+        json_path,
+        merge=quick,
+        blocked_dates_by_service=blocked_dates_by_service,
+    )
     print(f"\n\nData saved to: {json_path}")
 
 
@@ -305,9 +331,9 @@ def write_slots_json(
     all_services: set,
     path: str,
     merge: bool = False,
-    blocked_dates: set[str] | None = None,
+    blocked_dates_by_service: dict[str, set[str]] | None = None,
 ):
-    blocked_dates = blocked_dates or set()
+    blocked_dates_by_service = blocked_dates_by_service or {}
     today = date.today()
     # In merge mode, load existing data so full-range dates are preserved
     existing = {}
@@ -327,6 +353,7 @@ def write_slots_json(
     services_out = {}
     for svc_id in sorted(all_known, key=lambda x: int(x)):
         svc_name = SERVICE_NAMES.get(svc_id, f"Service {svc_id}")
+        blocked_dates = blocked_dates_by_service.get(svc_id, set())
 
         # Start from existing dates outside the freshly-fetched window.
         # Only keep entries that had actual open time slots (d["times"] non-empty) —
