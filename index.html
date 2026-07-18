@@ -344,7 +344,7 @@
       flex-shrink: 0;
     }
 
-    .svc-btn:hover:not(.zero) {
+    .svc-btn:hover {
       border-color: var(--navy);
       color: var(--navy);
       box-shadow: var(--shadow-sm);
@@ -358,8 +358,12 @@
     }
 
     .svc-btn.zero {
-      opacity: .45;
-      cursor: not-allowed;
+      opacity: .62;
+      cursor: pointer;
+    }
+
+    .svc-btn.zero:hover {
+      opacity: 1;
     }
 
     .svc-count {
@@ -745,6 +749,35 @@
       flex-wrap: wrap;
     }
 
+    .appointment-links {
+      display: flex;
+      align-items: center;
+      gap: .55rem .9rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+      padding: .85rem 1rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      background: var(--paper-dark);
+      font-size: .82rem;
+    }
+
+    .appointment-links-label {
+      color: var(--muted);
+      font-weight: 600;
+      margin-right: .15rem;
+    }
+
+    .appointment-links a {
+      color: var(--navy);
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .appointment-links a:hover {
+      text-decoration: underline;
+    }
+
     .footer-note a {
       color: var(--navy);
     }
@@ -996,7 +1029,7 @@
         <div class="header-sub"><span class="live-dot" id="live-dot"></span>Appointment Availability</div>
       </div>
       <button type="button" class="header-contact-link" id="contact-trigger">Contact</button>
-      <a class="header-book" href="https://appointment.indianembassynetherland.com/" target="_blank"
+      <a class="header-book" href="https://appointment.indianembassynetherland.com/application" target="_blank"
         rel="noopener" onclick="gtrack('book_click', { placement: 'header' })">Book appointment</a>
     </div>
   </header>
@@ -1037,6 +1070,15 @@
         <div class="skeleton-row" style="opacity:.35"></div>
       </div>
     </div>
+    <nav class="appointment-links" aria-label="Embassy appointment services">
+      <span class="appointment-links-label">Appointment services</span>
+      <a href="https://appointment.indianembassynetherland.com/application" target="_blank" rel="noopener"
+        onclick="gtrack('utility_link_click', { service: 'book' })">Book appointment</a>
+      <a href="https://appointment.indianembassynetherland.com/status" target="_blank" rel="noopener"
+        onclick="gtrack('utility_link_click', { service: 'status' })">Check status</a>
+      <a href="https://appointment.indianembassynetherland.com/cancellation" target="_blank" rel="noopener"
+        onclick="gtrack('utility_link_click', { service: 'cancel' })">Cancel application</a>
+    </nav>
     <div class="footer-note">
       <span>Slots are reported by the embassy booking API and refresh every 10 minutes.
         Always confirm on the <a href="https://appointment.indianembassynetherland.com/" target="_blank"
@@ -1288,7 +1330,6 @@
       class="svc-btn ${isActive ? 'active' : ''} ${isZero ? 'zero' : ''}"
       data-id="${id}"
       onclick="selectService('${id}')"
-      ${isZero ? 'disabled aria-disabled="true"' : ''}
       aria-pressed="${isActive}"
     >${svc.name}<span class="svc-count">${count}</span></button>`;
       }).join('');
